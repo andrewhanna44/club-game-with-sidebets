@@ -1,0 +1,1978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
+<title>Club Game</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Club Game">
+<meta name="theme-color" content="#14432a">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-180.png">
+<link rel="manifest" href="site.webmanifest">
+<style>
+:root{
+  --green:#14432a; --green2:#1d5c39; --green3:#2a7a4d;
+  --cream:#f6f3ea; --card:#ffffff; --ink:#16211b; --mute:#6b7a70;
+  --line:#dfe4dc; --red:#b3261e; --gold:#b8892b; --blue:#2a5d9e;
+  --pos:#1a7f3c; --neg:#b3261e;
+  --pad:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  color:var(--ink); background:var(--cream);
+  padding-bottom:calc(64px + var(--pad));
+  -webkit-text-size-adjust:100%;
+}
+h1,h2,h3{margin:0;font-weight:650;letter-spacing:-.01em}
+button{font:inherit;color:inherit;cursor:pointer}
+input,select{font:inherit;color:inherit}
+
+/* ---------- chrome ---------- */
+header{
+  position:sticky;top:0;z-index:40;background:var(--green);color:#fff;
+  padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;
+  display:flex;align-items:center;gap:10px;
+}
+header .ttl{font-size:17px;font-weight:650;line-height:1.2}
+header .sub{font-size:12px;opacity:.72;line-height:1.2;margin-top:2px}
+header .spacer{flex:1}
+.hbtn{background:rgba(255,255,255,.14);border:0;color:#fff;border-radius:9px;padding:7px 11px;font-size:13px;font-weight:600}
+.hbtn:active{background:rgba(255,255,255,.28)}
+
+nav{
+  position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;
+  background:#fff;border-top:1px solid var(--line);
+  padding-bottom:var(--pad);
+}
+nav button{
+  flex:1;border:0;background:none;padding:9px 2px 8px;
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  font-size:10.5px;font-weight:600;color:var(--mute);letter-spacing:.01em;
+}
+nav button svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+nav button.on{color:var(--green2)}
+
+main{padding:14px 12px 22px;max-width:760px;margin:0 auto}
+
+/* ---------- primitives ---------- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-bottom:11px;overflow:hidden}
+.card>.hd{padding:11px 13px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px}
+.card>.hd h3{font-size:14px}
+.card>.bd{padding:13px}
+.card>.bd.flush{padding:0}
+.muted{color:var(--mute)}
+.tiny{font-size:12px}
+.mono{font-variant-numeric:tabular-nums}
+.row{display:flex;align-items:center;gap:9px}
+.row.wrap{flex-wrap:wrap}
+.grow{flex:1;min-width:0}
+.right{margin-left:auto}
+.trunc{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.btn{background:var(--green2);color:#fff;border:0;border-radius:10px;padding:10px 15px;font-weight:600;font-size:14px}
+.btn:active{background:var(--green)}
+.btn.ghost{background:#fff;color:var(--green2);border:1px solid var(--line)}
+.btn.ghost:active{background:#eef3ee}
+.btn.sm{padding:7px 11px;font-size:13px;border-radius:9px}
+.btn.danger{background:var(--red)}
+.btn:disabled{opacity:.4}
+.btn.block{width:100%;display:block}
+
+label.f{display:block;margin-bottom:11px}
+label.f>span{display:block;font-size:11.5px;font-weight:650;text-transform:uppercase;letter-spacing:.05em;color:var(--mute);margin-bottom:4px}
+input[type=text],input[type=number],input[type=time],input[type=date],input[type=email],select,textarea{
+  width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:#fff
+}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--green3);outline-offset:-1px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 10px}
+
+.pill{display:inline-block;padding:2px 7px;border-radius:99px;font-size:11px;font-weight:650;background:#eef3ee;color:var(--green2)}
+.pill.warn{background:#fdf1dc;color:#8a5d09}
+.pill.grey{background:#eee;color:var(--mute)}
+.pill.red{background:#fbe9e7;color:var(--red)}
+.pos{color:var(--pos);font-weight:650}
+.neg{color:var(--neg);font-weight:650}
+.zero{color:var(--mute)}
+
+.empty{text-align:center;padding:28px 16px;color:var(--mute);font-size:13.5px}
+.banner{background:#fdf1dc;border:1px solid #edd9ab;color:#7a5406;border-radius:11px;padding:10px 12px;font-size:12.5px;margin-bottom:11px}
+.banner b{color:#5c3f04}
+
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);font-size:13.5px}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mute);font-weight:650}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:0}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+.lrow{display:flex;align-items:center;gap:11px;padding:11px 13px;border-bottom:1px solid var(--line);width:100%;background:none;border-left:0;border-right:0;border-top:0;text-align:left}
+.lrow:last-child{border-bottom:0}
+.lrow:active{background:#f4f7f4}
+.rank{width:24px;text-align:center;font-weight:700;color:var(--mute);font-size:13px;flex:none}
+.chev{width:8px;height:8px;border-right:2px solid #c3ccc5;border-bottom:2px solid #c3ccc5;transform:rotate(-45deg);flex:none;margin-right:2px}
+.score{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;flex:none}
+
+/* ---------- scorecard entry ---------- */
+.holebar{display:flex;align-items:center;gap:10px;background:var(--green);color:#fff;border-radius:12px;padding:11px 13px;margin-bottom:11px}
+.holebar .h{font-size:24px;font-weight:750;line-height:1}
+.holebar .meta{font-size:11.5px;opacity:.78;line-height:1.35}
+.holebar button{background:rgba(255,255,255,.16);border:0;color:#fff;width:38px;height:38px;border-radius:10px;font-size:19px;line-height:1;flex:none}
+.holebar button:disabled{opacity:.28}
+
+.prow{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.prow:last-child{border-bottom:0}
+.prow .nm{font-weight:600;font-size:14px}
+.prow .hc{font-size:11.5px;color:var(--mute)}
+.stepper{display:flex;align-items:center;gap:0;flex:none;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.stepper button{width:36px;height:38px;border:0;background:#fff;font-size:18px;line-height:1;color:var(--green2)}
+.stepper button:active{background:#eef3ee}
+.stepper .v{width:44px;height:38px;border:0;border-left:1px solid var(--line);border-right:1px solid var(--line);text-align:center;font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;background:#fff;border-radius:0;padding:0}
+.dot{position:relative}
+.dot::after{content:"";position:absolute;top:4px;right:4px;width:5px;height:5px;border-radius:50%;background:var(--red)}
+.dot.d2::after{box-shadow:-7px 0 0 var(--red)}
+
+.cardtbl td,.cardtbl th{padding:6px 5px;font-size:12px;text-align:center}
+.cardtbl th:first-child,.cardtbl td:first-child{text-align:left;position:sticky;left:0;background:#fff;z-index:1;min-width:96px;padding-left:11px}
+.cardtbl thead th{background:#f4f7f4}
+.cardtbl .par td{background:#f7f9f7;color:var(--mute);font-size:11px}
+.cardtbl .tot{font-weight:700;background:#f4f7f4}
+.u{color:var(--red);font-weight:700}
+.o{color:var(--mute)}
+
+.betrow{padding:11px 13px;border-bottom:1px solid var(--line)}
+.betrow:last-child{border-bottom:0}
+.betrow.void{opacity:.45}
+.betside{display:flex;align-items:center;gap:8px;padding:3px 0}
+.betside .who{flex:1;font-size:13.5px;min-width:0}
+.betside .sc{font-variant-numeric:tabular-nums;font-weight:700;font-size:15px;width:32px;text-align:right}
+.betside .amt{font-variant-numeric:tabular-nums;font-weight:650;font-size:13.5px;width:52px;text-align:right}
+.vs{font-size:10px;font-weight:700;color:var(--mute);letter-spacing:.08em;padding:1px 0}
+
+.sheet{position:fixed;inset:0;z-index:100;background:rgba(10,20,14,.42);display:flex;align-items:flex-end;justify-content:center}
+.sheet .inner{background:var(--cream);width:100%;max-width:560px;max-height:92vh;overflow-y:auto;border-radius:16px 16px 0 0;padding:16px 14px calc(20px + var(--pad))}
+.sheet h2{font-size:17px;margin-bottom:13px}
+.pickgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.pick{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 10px;text-align:left;font-size:13.5px;font-weight:600}
+.pick.on{border-color:var(--green3);background:#eef7f0;color:var(--green)}
+.pick .s{display:block;font-size:11px;font-weight:500;color:var(--mute);margin-top:1px}
+.pick.on .s{color:var(--green3)}
+
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+.seg button{flex:1;border:0;background:none;padding:8px 4px;font-size:12.5px;font-weight:600;color:var(--mute)}
+.seg button.on{background:var(--green2);color:#fff}
+.setuplink{display:flex;align-items:center;gap:10px;padding:13px;border-bottom:1px solid var(--line);width:100%;background:none;border-left:0;border-right:0;border-top:0;text-align:left;font-size:14px;font-weight:600}
+.setuplink:last-child{border-bottom:0}
+.setuplink:active{background:#f4f7f4}
+.setuplink .d{font-size:12px;font-weight:400;color:var(--mute);margin-top:1px}
+</style>
+</head>
+<body>
+<header>
+  <div class="grow">
+    <div class="ttl" id="h-ttl">Club Game</div>
+    <div class="sub" id="h-sub"></div>
+  </div>
+  <button class="hbtn" id="h-me">Me</button>
+</header>
+<main id="main"></main>
+<nav id="nav"></nav>
+
+<script>
+"use strict";
+/* ============================================================
+   CLUB GAME  —  Sunday game engine
+   Single file. localStorage now; Firebase seam at the bottom.
+   ============================================================ */
+
+const BUILD = "2026-08-05.1";
+const H = 18;
+const KEY = "clubgame.v1";
+
+const $  = (s,r)=> (r||document).querySelector(s);
+const el = (t,c,h)=>{ const e=document.createElement(t); if(c) e.className=c; if(h!=null) e.innerHTML=h; return e; };
+const uid = p => p + Math.random().toString(36).slice(2,9);
+const esc = s => String(s==null?"":s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const clamp = (v,lo,hi)=> Math.max(lo, Math.min(hi, v));
+const sum = a => a.reduce((x,y)=>x+y,0);
+const money = n => (n<0?"-":"") + "$" + Math.abs(Math.round(n));
+const signed = n => n>0 ? "+"+n : (n===0 ? "E" : String(n));
+const cls = n => n>0 ? "neg" : (n<0 ? "pos" : "zero");   // golf: under par is good
+
+/* ------------------------------------------------------------
+   COURSE DATA — Croasdaile CC, from the club's April 2026 card.
+   Two men's stroke-index sets + a ladies' set, exactly as printed.
+   ------------------------------------------------------------ */
+const SI_SETS = {
+  // Gold through White/Green
+  menA:   [17,11, 5, 9,15, 3, 1,13, 7, 18, 8, 6,10, 4,16, 2,12,14],
+  // Green through Red
+  menB:   [11,15, 3, 9,17, 5, 7,13, 1, 18, 2,12, 6,16, 8,10, 4,14],
+  ladies: [11,17, 5, 9,15, 3, 7,13, 1,  6,10,16, 2,18,12,14, 4, 8]
+};
+
+const CROASDAILE = {
+  id:"croasdaile", name:"Croasdaile Country Club", loc:"Durham, NC",
+  par:[4,3,5,4,3,5,4,4,4, 5,3,4,5,3,4,4,4,4],
+  siSets: SI_SETS,
+  tees:[
+    {id:"gold",  name:"Gold",        si:"menA", rating:74.3, slope:144, ratingW:null, slopeW:null, total:7012,
+     yards:[387,191,577,386,199,562,460,407,432, 501,186,445,553,207,339,440,375,365]},
+    {id:"gb",    name:"Gold / Blue",  si:"menA", rating:73.1, slope:142, ratingW:null, slopeW:null, total:6760, yards:null},
+    {id:"blue",  name:"Blue",         si:"menA", rating:72.1, slope:138, ratingW:78.2, slopeW:145, total:6515,
+     yards:[347,157,550,353,161,526,434,384,402, 473,175,422,524,179,307,408,365,348]},
+    {id:"bw",    name:"Blue / White", si:"menA", rating:70.6, slope:135, ratingW:76.6, slopeW:141, total:6231, yards:null},
+    {id:"white", name:"White",        si:"menA", rating:69.7, slope:129, ratingW:75.4, slopeW:139, total:6005,
+     yards:[318,143,500,312,136,514,402,360,370, 446,164,375,492,163,293,371,343,303]},
+    {id:"wg",    name:"White / Green",si:"menA", rating:67.7, slope:123, ratingW:72.5, slopeW:132, total:5559, yards:null},
+    {id:"green", name:"Green",        si:"menB", rating:66.7, slope:117, ratingW:71.3, slopeW:129, total:5329,
+     yards:[287,103,448,300,118,471,347,330,338, 416,153,298,432, 89,265,345,301,288]},
+    {id:"gr",    name:"Green / Red",  si:"menB", rating:63.6, slope:113, ratingW:67.7, slopeW:118, total:4654, yards:null},
+    {id:"red",   name:"Red",          si:"menB", rating:61.9, slope:110, ratingW:65.7, slopeW:114, total:4275,
+     yards:[222,103,360,188, 86,326,295,275,267, 353,114,231,391, 89,225,258,245,247]}
+  ]
+};
+
+/* ------------------------------------------------------------
+   SEED — the 26 Jul 2026 game, straight off the spreadsheet.
+   Handicap indexes are unknown (the file had none), so they are
+   left null. The app degrades to gross until they're filled in.
+   ------------------------------------------------------------ */
+const SEED_ROSTER = [
+  ["C. O'Shea","gold"],    ["M. DeSevo","white"],  ["B. Burgess","gold"],   ["J. MacDonald","bw"],
+  ["G. Moon","gb"],        ["T. Blanco","gb"],     ["J. Gould","blue"],     ["Nav Rungta","gb"],
+  ["R. Wainio","blue"],    ["K. Babcock","gb"],    ["M. Hook","gb"],        ["J. McCallie","bw"],
+  ["J. Oros","gb"],        ["C. Baltz","gb"],      ["R. Newbold","gold"],   ["J. Folkerth","gb"],
+  ["Tim Maloney","gold"],  ["B. Barnwell","gb"],   ["J. Taylor","blue"],    ["B. Davis","blue"],
+  ["T. Brooks","blue"],    ["R. Easley","blue"],   ["M. Rooney","gb"],      ["G. Perna","gb"]
+];
+const SEED_GROUPS = [
+  ["7:00 AM", ["B. Burgess","C. Baltz","R. Easley","J. McCallie"]],
+  ["7:10 AM", ["Nav Rungta","B. Barnwell","M. Hook","J. Taylor"]],
+  ["7:20 AM", ["T. Blanco","Tim Maloney","J. Oros","B. Davis"]],
+  ["7:30 AM", ["C. O'Shea","G. Perna","J. Folkerth","M. DeSevo"]],
+  ["7:40 AM", ["T. Brooks","G. Moon","J. Gould","R. Wainio"]],
+  ["7:50 AM", ["R. Newbold","K. Babcock","M. Rooney","J. MacDonald"]]
+];
+// Bets as booked that Sunday. sideA vs sideB; rejected ones kept so the
+// screen matches the paper. Stake/cap default to the house $5 / $25.
+const SEED_BETS = [
+  [["C. O'Shea","G. Perna"],["T. Brooks","G. Moon"],0],
+  [["C. O'Shea","G. Perna"],["R. Newbold","K. Babcock"],0],
+  [["Nav Rungta","M. Hook"],["T. Brooks","J. Gould"],0],
+  [["Nav Rungta","B. Barnwell"],["T. Blanco","Tim Maloney"],0],
+  [["C. O'Shea","G. Perna"],["Nav Rungta","B. Barnwell"],0],
+  [["Nav Rungta","B. Barnwell"],["T. Brooks","G. Moon"],0],
+  [["K. Babcock"],["Nav Rungta"],0],
+  [["Nav Rungta","M. Hook"],["T. Blanco","J. Oros"],0],
+  [["Nav Rungta"],["T. Blanco"],0],
+  [["T. Brooks"],["Nav Rungta"],0],
+  [["R. Wainio","T. Brooks"],["Nav Rungta","J. Taylor"],1],
+  [["R. Newbold","J. MacDonald"],["T. Blanco","B. Davis"],1],
+  [["R. Newbold","J. MacDonald"],["B. Burgess","J. McCallie"],1],
+  [["R. Newbold","M. Rooney"],["B. Burgess","R. Easley"],1],
+  [["R. Newbold","M. Rooney"],["Nav Rungta","M. Hook"],1],
+  [["R. Newbold","K. Babcock"],["B. Burgess","C. Baltz"],1],
+  [["R. Newbold"],["B. Burgess"],1],
+  [["R. Newbold"],["C. O'Shea"],0],
+  [["R. Newbold"],["T. Blanco"],1],
+  [["R. Newbold"],["T. Brooks"],1],
+  [["R. Newbold","M. Rooney"],["T. Brooks","J. Gould"],1],
+  [["R. Newbold","B. Burgess"],["C. O'Shea","T. Blanco"],0],
+  [["R. Newbold","K. Babcock"],["Nav Rungta","B. Barnwell"],1],
+  [["R. Newbold","K. Babcock"],["T. Brooks","G. Moon"],0],
+  [["K. Babcock"],["Tim Maloney"],0],
+  [["K. Babcock"],["T. Blanco"],0],
+  [["K. Babcock","M. Rooney"],["G. Moon","J. Gould"],0],
+  [["C. O'Shea","J. Folkerth"],["Nav Rungta","M. Hook"],0],
+  [["C. O'Shea","J. Folkerth"],["Nav Rungta","B. Barnwell"],0],
+  [["C. O'Shea","J. Folkerth"],["R. Newbold","M. Rooney"],0],
+  [["B. Barnwell","M. Hook"],["R. Easley","J. McCallie"],1],
+  [["K. Babcock","J. MacDonald"],["C. Baltz","J. McCallie"],0],
+  [["M. Rooney","J. MacDonald"],["J. Gould","R. Wainio"],0],
+  [["C. O'Shea","B. Barnwell"],["T. Blanco","Tim Maloney"],0],
+  [["T. Blanco","G. Moon"],["Nav Rungta","M. Hook"],0],
+  [["Nav Rungta","Tim Maloney"],["C. O'Shea","J. Folkerth"],0],
+  [["B. Davis","T. Blanco"],["T. Brooks","R. Wainio"],0],
+  [["B. Davis","Tim Maloney"],["C. Baltz","J. McCallie"],0],
+  [["B. Davis","Tim Maloney"],["K. Babcock","J. MacDonald"],0],
+  [["B. Davis","T. Blanco"],["Nav Rungta","J. Taylor"],1],
+  [["B. Davis","J. Oros"],["R. Easley","J. McCallie"],1],
+  [["J. Gould","T. Brooks"],["J. Oros","T. Blanco"],0],
+  [["J. Gould","G. Moon"],["C. Baltz","R. Easley"],0],
+  [["J. Gould","R. Wainio"],["J. Taylor","M. Hook"],0],
+  [["B. Barnwell","J. Taylor"],["Tim Maloney","B. Davis"],0],
+  [["M. Hook","B. Davis"],["R. Easley","J. McCallie"],1],
+  [["B. Barnwell","M. Hook"],["M. Rooney","J. MacDonald"],1],
+  [["B. Barnwell","M. Hook"],["G. Moon","J. Gould"],0],
+  [["B. Barnwell","Nav Rungta"],["T. Brooks","G. Moon"],1],
+  [["B. Barnwell","M. Hook"],["C. Baltz","R. Easley"],0],
+  [["B. Barnwell","M. Hook"],["G. Perna","J. Folkerth"],0],
+  [["G. Moon","J. Gould"],["C. Baltz","R. Easley"],1],
+  [["G. Moon","R. Wainio"],["B. Barnwell","J. Taylor"],0],
+  [["G. Moon"],["T. Blanco"],0],
+  [["G. Moon"],["C. Baltz"],0],
+  [["Nav Rungta","M. Hook"],["G. Moon","J. Gould"],1]
+];
+
+function seed(){
+  const players = SEED_ROSTER.map(([name,tee])=>({
+    id: uid("p"), name, index: null, sex:"M", email:"", homeTee: tee, notes:""
+  }));
+  const byName = {}; players.forEach(p=> byName[p.name]=p.id);
+
+  const entrants = {};
+  players.forEach(p=> entrants[p.id] = { teeId: p.homeTee });
+
+  const groups = SEED_GROUPS.map(([teeTime,names])=>({
+    id: uid("g"), teeTime, pids: names.map(n=>byName[n]), scorer:null
+  }));
+
+  const bets = SEED_BETS.map(([a,b,rej])=>({
+    id: uid("b"),
+    a: a.map(n=>byName[n]).filter(Boolean),
+    b: b.map(n=>byName[n]).filter(Boolean),
+    stake: 5, cap: 25, rejected: !!rej
+  }));
+
+  const scores = {};
+  players.forEach(p=> scores[p.id] = new Array(H).fill(null));
+
+  return {
+    build: BUILD, me: null,
+    players, courses:[CROASDAILE],
+    game: {
+      id: uid("gm"), name:"Sunday Game", date:"2026-07-26", courseId:"croasdaile",
+      allowance:{ mode:"full", pct:100 },
+      team:{ balls:2, allBirdies:true },
+      skins:{ basis:"gross" },
+      betsCfg:{ basis:"gross", stake:5, cap:25 },
+      money:{ entry:40, teamShare:20, skinsShare:20, payouts:[100,10] },
+      entrants, groups, draw:null
+    },
+    bets, scores
+  };
+}
+
+/* ------------------------------------------------------------
+   STORE
+   ------------------------------------------------------------ */
+const Store = {
+  s:null,
+  load(){
+    try{
+      const raw = localStorage.getItem(KEY);
+      if(raw){ this.s = JSON.parse(raw); this.migrate(); return; }
+    }catch(e){ console.warn("load failed, reseeding", e); }
+    this.s = seed(); this.save();
+  },
+  migrate(){
+    const s = this.s;
+    if(!s.game) { this.s = seed(); return; }
+    // keep the built-in course definition authoritative unless the user edited it
+    if(!s.courses || !s.courses.length) s.courses = [CROASDAILE];
+    s.players.forEach(p=>{ if(p.sex==null) p.sex="M"; });
+    s.players.forEach(p=>{ if(!s.scores[p.id]) s.scores[p.id] = new Array(H).fill(null); });
+    if(!s.bets) s.bets = [];
+    if(s.game.draw===undefined) s.game.draw = null;
+  },
+  save(){
+    try{ localStorage.setItem(KEY, JSON.stringify(this.s)); }
+    catch(e){ console.error("save failed", e); }
+    Sync.push();
+  },
+  reset(){ this.s = seed(); this.save(); }
+};
+
+/* ------------------------------------------------------------
+   LOOKUPS
+   ------------------------------------------------------------ */
+const G      = ()=> Store.s.game;
+const course = ()=> Store.s.courses.find(c=>c.id===G().courseId) || Store.s.courses[0];
+const par    = h => course().par[h];
+const parTot = ()=> sum(course().par);
+const player = id => Store.s.players.find(p=>p.id===id);
+const pname  = id => { const p=player(id); return p? p.name : "—"; };
+const teeOf  = id => { const e=G().entrants[id]; return e? course().tees.find(t=>t.id===e.teeId) : null; };
+const inGame = ()=> Object.keys(G().entrants).filter(id=>player(id));
+const groupOf= pid => G().groups.find(g=>g.pids.includes(pid));
+const gross  = (pid,h)=>{ const a=Store.s.scores[pid]; return a? a[h] : null; };
+
+/* ------------------------------------------------------------
+   HANDICAP ENGINE
+   Course Handicap = Index x (Slope/113) + (Rating - Par)
+   ------------------------------------------------------------ */
+function courseHcp(pid){
+  const p = player(pid), t = teeOf(pid);
+  if(!p || !t || p.index==null) return null;
+  const women = p.sex === "F";
+  const rating = women && t.ratingW!=null ? t.ratingW : t.rating;
+  const slope  = women && t.slopeW !=null ? t.slopeW  : t.slope;
+  if(rating==null || slope==null) return null;
+  return Math.round(p.index * (slope/113) + (rating - parTot()));
+}
+
+/** Playing handicap after the game's allowance rule. null = no index on file. */
+function playingHcp(pid){
+  const ch = courseHcp(pid);
+  if(ch==null) return null;
+  const a = G().allowance;
+  if(a.mode === "pct") return Math.round(ch * (a.pct/100));
+  if(a.mode === "low"){
+    const all = inGame().map(courseHcp).filter(v=>v!=null);
+    if(!all.length) return ch;
+    return ch - Math.min(...all);
+  }
+  return ch;
+}
+
+/** Stroke index for this player's tee, 1..18 per hole. */
+function siFor(pid, h){
+  const t = teeOf(pid), c = course();
+  const p = player(pid);
+  let set = t ? t.si : "menA";
+  if(p && p.sex === "F") set = "ladies";
+  const arr = c.siSets[set] || c.siSets.menA;
+  return arr[h];
+}
+
+/** Strokes given on a hole. Negative for plus handicaps (strokes given back). */
+function strokes(pid, h){
+  const ph = playingHcp(pid);
+  if(ph==null || ph===0) return 0;
+  const si = siFor(pid,h);
+  if(ph > 0){
+    const base = Math.floor(ph/H), rem = ph % H;
+    return base + (si <= rem ? 1 : 0);
+  }
+  const p = -ph, base = Math.floor(p/H), rem = p % H;
+  return -(base + (si > H - rem ? 1 : 0));
+}
+
+function net(pid,h){
+  const g = gross(pid,h);
+  return g==null ? null : g - strokes(pid,h);
+}
+/** Score on a hole under the chosen basis. */
+function val(pid,h,basis){ return basis==="net" ? net(pid,h) : gross(pid,h); }
+
+function totalFor(pid, basis){
+  let t=0, thru=0;
+  for(let h=0;h<H;h++){ const v=val(pid,h,basis); if(v!=null){ t+=v; thru++; } }
+  return { total:t, thru };
+}
+
+/* ------------------------------------------------------------
+   TEAM SCORING
+   Best N net balls per hole vs par; every net birdie-or-better
+   also counts, even beyond N.  (Andrew: "3 birdies, all 3 count")
+   ------------------------------------------------------------ */
+function groupScore(g){
+  const cfg = G().team;
+  let total=0, thru=0;
+  const perHole = [];
+  for(let h=0;h<H;h++){
+    const p = par(h);
+    const nets = g.pids.map(pid=>{
+      const v = net(pid,h);
+      return v==null ? null : v;
+    }).filter(v=>v!=null).sort((a,b)=>a-b);
+    if(!nets.length){ perHole.push(null); continue; }
+    thru++;
+    const take = new Set();
+    for(let i=0;i<Math.min(cfg.balls, nets.length);i++) take.add(i);
+    if(cfg.allBirdies) nets.forEach((n,i)=>{ if(n < p) take.add(i); });
+    let c=0; take.forEach(i=> c += nets[i]-p );
+    perHole.push(c); total += c;
+  }
+  return { total, thru, perHole };
+}
+
+function teamStandings(){
+  const rows = G().groups.map(g=>({ g, ...groupScore(g) }));
+  const played = rows.filter(r=>r.thru>0);
+  played.sort((a,b)=> a.total-b.total || a.g.teeTime.localeCompare(b.g.teeTime));
+  played.forEach(r=>{ r.place = 1 + played.filter(o=>o.total < r.total).length; });
+  rows.filter(r=>r.thru===0).forEach(r=> r.place=null );
+  return { rows, played };
+}
+
+/* ------------------------------------------------------------
+   TEAM BUILDER
+   Five admin-selectable ways to form today's teams:
+     committee — hand-picked, no algorithm (the existing manual UI)
+     abcd      — split the field into 4 skill tiers, one per team
+     snake     — rank and deal in a zig-zag draft
+     balanced  — try many random splits, keep the tightest spread
+     blind     — one straight random shuffle
+   Every random method uses a seeded PRNG so a draw can be proven,
+   not just claimed — the seed + method + timestamp are the receipt.
+   ------------------------------------------------------------ */
+const DRAW_METHODS = [
+  ["committee","Committee pick","Admins hand-select every group — no algorithm runs."],
+  ["abcd","A / B / C / D tiers","Split the field into four skill tiers by handicap, one player per team from each tier."],
+  ["snake","Snake seeding","Rank the field by handicap and deal in a zig-zag draft, best to worst and back."],
+  ["balanced","Balanced draw","Try thousands of random splits, keep the one with the smallest gap between team totals."],
+  ["blind","Blind draw","One straight random shuffle. Fully random, no balancing at all."]
+];
+
+function mulberry32(seed){
+  let a = seed >>> 0;
+  return function(){
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a>>>15), 1 | a);
+    t = (t + Math.imul(t ^ (t>>>7), 61 | t)) ^ t;
+    return ((t ^ (t>>>14)) >>> 0) / 4294967296;
+  };
+}
+function newSeed(){ return (Date.now() ^ Math.floor(Math.random()*1e9)) >>> 0; }
+function shuffleSeeded(arr, rng){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){ const j = Math.floor(rng()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+
+/** Balancing number for a player: course handicap if known, else the field
+    average (or 18 if nobody has an index yet). `estimated` flags a guess. */
+function balanceInfo(pid){
+  const ch = courseHcp(pid);
+  if(ch!=null) return { value: ch, estimated:false };
+  const known = inGame().map(courseHcp).filter(v=>v!=null);
+  return { value: known.length ? sum(known)/known.length : 18, estimated:true };
+}
+
+function evenSplit(n,k){
+  const base = Math.floor(n/k), extra = n%k;
+  return new Array(k).fill(base).map((s,i)=> s + (i<extra?1:0));
+}
+/** How many teams, and how big each is, for a field size and target team size. */
+function splitSizes(total, teamSize){
+  const T = Math.max(1, Math.round(total/Math.max(1,teamSize)));
+  return evenSplit(total, T);
+}
+function sliceBySizes(arr, sizes){
+  const out=[]; let i=0;
+  sizes.forEach(sz=>{ out.push(arr.slice(i,i+sz)); i+=sz; });
+  return out;
+}
+
+function snakeDeal(sortedIds, sizes){
+  const T = sizes.length, teams = sizes.map(()=>[]), cap = sizes.slice();
+  let t = 0, dir = 1;
+  const bounce = ()=>{ t += dir; if(t>=T){ t=T-1; dir=-1; } else if(t<0){ t=0; dir=1; } };
+  sortedIds.forEach(pid=>{
+    while(teams[t].length >= cap[t]) bounce();
+    teams[t].push(pid);
+    bounce();
+  });
+  return teams;
+}
+function roundRobinDeal(ids, teams, cap, start){
+  const T = teams.length; let t = start;
+  ids.forEach(pid=>{
+    while(teams[t].length >= cap[t]) t = (t+1)%T;
+    teams[t].push(pid);
+    t = (t+1)%T;
+  });
+  return t;
+}
+function abcdDeal(sortedIds, sizes){
+  const T = sizes.length, teams = sizes.map(()=>[]), cap = sizes.slice();
+  const tierSizes = evenSplit(sortedIds.length, 4);
+  let idx=0, start=0;
+  for(let tier=0; tier<4; tier++){
+    const tierIds = sortedIds.slice(idx, idx+tierSizes[tier]); idx += tierSizes[tier];
+    start = roundRobinDeal(tierIds, teams, cap, start);
+  }
+  return teams;
+}
+
+function draftStats(teams){
+  const totals = teams.map(t=> sum(t.map(pid=>balanceInfo(pid).value)));
+  const avgs = teams.map((t,i)=> t.length? totals[i]/t.length : 0);
+  const spread = totals.length ? Math.max(...totals)-Math.min(...totals) : 0;
+  return { totals, avgs, spread };
+}
+
+/** Generates one draw. Returns null for "committee" (no algorithm). */
+function genTeams(method, teamSize, seed){
+  const field = inGame().slice();
+  const sizes = splitSizes(field.length, teamSize);
+  const rng = mulberry32(seed);
+  const byVal = (a,b)=> balanceInfo(a).value - balanceInfo(b).value;
+
+  if(method==="blind"){
+    return sliceBySizes(shuffleSeeded(field, rng), sizes);
+  }
+  if(method==="balanced"){
+    let best=null, bestSpread=Infinity;
+    for(let i=0;i<3000;i++){
+      const teams = sliceBySizes(shuffleSeeded(field, rng), sizes);
+      const spread = draftStats(teams).spread;
+      if(spread < bestSpread){ bestSpread=spread; best=teams; }
+    }
+    return best;
+  }
+  const sorted = shuffleSeeded(field, rng).sort(byVal);   // rng breaks ties among equal handicaps
+  if(method==="snake") return snakeDeal(sorted, sizes);
+  if(method==="abcd")  return abcdDeal(sorted, sizes);
+  return null;   // committee
+}
+
+function parseTeeTime(str){
+  const m = /(\d+):(\d+)\s*([AP]M)/i.exec(str||"");
+  if(!m) return null;
+  let h = parseInt(m[1],10)%12; if(/pm/i.test(m[3])) h+=12;
+  return h*60+parseInt(m[2],10);
+}
+function fmtTeeTime(mins){
+  mins = ((mins%1440)+1440)%1440;
+  const h = Math.floor(mins/60), mm = mins%60, ap = h>=12?"PM":"AM";
+  let h12 = h%12; if(h12===0) h12=12;
+  return h12+":"+String(mm).padStart(2,"0")+" "+ap;
+}
+
+/** Commits a generated draw into G().groups, reusing existing tee times
+    where possible and extending in 10-minute steps for any extra slots. */
+function applyDraw(teams, meta){
+  const g = G();
+  const existing = g.groups.slice().sort((a,b)=> (parseTeeTime(a.teeTime)??0)-(parseTeeTime(b.teeTime)??0));
+  const T = teams.length, out = [];
+  for(let i=0;i<T;i++){
+    let teeTime, id;
+    if(i < existing.length){ teeTime = existing[i].teeTime; id = existing[i].id; }
+    else {
+      const lastMin = existing.length ? parseTeeTime(existing[existing.length-1].teeTime) : 7*60;
+      teeTime = fmtTeeTime((lastMin==null?7*60:lastMin) + 10*(i-existing.length+1));
+      id = uid("g");
+    }
+    out.push({ id, teeTime, pids: teams[i].slice(), scorer:null });
+  }
+  g.groups = out;
+  g.draw = Object.assign({}, meta, { manuallyAdjusted:false });
+  Store.save();
+}
+
+/** Call after any hand-edit to group membership so the receipt stays honest. */
+function markAdjusted(){
+  const g = G();
+  if(g.draw && g.draw.method!=="committee") g.draw.manuallyAdjusted = true;
+}
+
+/* ------------------------------------------------------------
+   SKINS
+   Lowest score on a hole across the whole field. Must be under
+   par, and must be the only one at that number.
+   ------------------------------------------------------------ */
+function skins(){
+  const basis = G().skins.basis;
+  const field = inGame();
+  const out = [];
+  for(let h=0;h<H;h++){
+    const p = par(h);
+    const es = [];
+    field.forEach(pid=>{ const v=val(pid,h,basis); if(v!=null) es.push({pid,v}); });
+    if(!es.length) continue;
+    const low = Math.min(...es.map(e=>e.v));
+    if(low >= p) continue;                      // must be birdie or better
+    const win = es.filter(e=>e.v===low);
+    if(win.length !== 1) continue;              // must be solo
+    out.push({ hole:h, pid:win[0].pid, score:low, par:p, under:p-low });
+  }
+  return out;
+}
+
+/* ------------------------------------------------------------
+   SIDE BETS
+   Each side is 1 or 2 players. A pair's score is their BETTER
+   BALL. Payout = stake x stroke difference, capped both ways.
+   Only holes where every player on both sides has posted count,
+   so a bet reads correctly mid-round and out of order.
+   ------------------------------------------------------------ */
+function sideHole(ids,h,basis){
+  const vs = ids.map(id=>val(id,h,basis));
+  if(vs.some(v=>v==null)) return null;
+  return Math.min(...vs);
+}
+function betResult(bet){
+  const basis = G().betsCfg.basis;
+  let a=0,b=0,thru=0;
+  for(let h=0;h<H;h++){
+    const sa = sideHole(bet.a,h,basis), sb = sideHole(bet.b,h,basis);
+    if(sa==null || sb==null) continue;
+    a+=sa; b+=sb; thru++;
+  }
+  if(bet.rejected) return { a,b,thru, amtA:0, amtB:0, capped:false, live:false };
+  const raw = bet.stake * (b - a);
+  const amtA = clamp(raw, -bet.cap, bet.cap);
+  return { a,b,thru, amtA, amtB:-amtA, capped: Math.abs(raw) > bet.cap, live:true };
+}
+function betPL(pid){
+  let t=0;
+  Store.s.bets.forEach(bet=>{
+    if(bet.rejected) return;
+    const r = betResult(bet);
+    if(bet.a.includes(pid)) t += r.amtA;
+    else if(bet.b.includes(pid)) t += r.amtB;
+  });
+  return t;
+}
+function betCount(pid){
+  return Store.s.bets.filter(b=> !b.rejected && (b.a.includes(pid)||b.b.includes(pid))).length;
+}
+
+/* ------------------------------------------------------------
+   MONEY
+   ------------------------------------------------------------ */
+function ledger(){
+  const m = G().money, field = inGame(), n = field.length;
+  const teamPot  = n * m.teamShare;
+  const skinsPot = n * m.skinsShare;
+  const sk = skins();
+  const skinValue = sk.length ? Math.floor(skinsPot / sk.length) : 0;
+
+  const teamPay = {};
+  const { played } = teamStandings();
+  played.forEach(r=>{
+    const rate = m.payouts[r.place-1];
+    if(rate) r.g.pids.forEach(pid=> teamPay[pid] = (teamPay[pid]||0) + rate);
+  });
+
+  const skinsBy = {};
+  sk.forEach(s=> skinsBy[s.pid] = (skinsBy[s.pid]||0) + skinValue);
+
+  const rows = field.map(pid=>{
+    const t = teamPay[pid]||0, s = skinsBy[pid]||0, b = betPL(pid);
+    return { pid, team:t, skins:s, bets:b, entry:-m.entry, net: t+s+b-m.entry };
+  });
+  rows.sort((x,y)=> y.net - x.net);
+  return { rows, teamPot, skinsPot, skinValue, skinCount: sk.length, sk };
+}
+
+/* ------------------------------------------------------------
+   SETUP HEALTH — what still blocks correct handicapping
+   ------------------------------------------------------------ */
+function issues(){
+  const out = [];
+  const noIndex = Store.s.players.filter(p=> inGame().includes(p.id) && p.index==null);
+  if(noIndex.length) out.push({
+    k:"index",
+    msg:`<b>${noIndex.length} of ${inGame().length} players have no handicap index.</b> Everything is being scored gross until they're entered. Add them under Setup → Players.`
+  });
+  const c = course();
+  const badTee = c.tees.filter(t=> t.rating==null || t.slope==null);
+  if(badTee.length) out.push({ k:"tee", msg:`<b>${badTee.length} tee(s) missing a rating or slope.</b> Course handicaps can't be computed for them.` });
+  return out;
+}
+
+/* ============================================================
+   VIEWS
+   ============================================================ */
+let view = "game";
+let sub  = null;   // { type:"card", gid } | { type:"players" } | ...
+
+const ICONS = {
+  game:'<svg viewBox="0 0 24 24"><path d="M6 21V4l12 4-12 4"/><circle cx="18" cy="18" r="2.6"/></svg>',
+  bets:'<svg viewBox="0 0 24 24"><path d="M12 3v18M7.5 7h6.8a2.7 2.7 0 010 5.4H9.2a2.7 2.7 0 000 5.4H17"/></svg>',
+  stats:'<svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
+  setup:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.1"/><path d="M19.4 15a1.6 1.6 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.6 1.6 0 00-2.7 1.1v.2a2 2 0 11-4 0v-.1A1.6 1.6 0 006.9 19l-.1.1a2 2 0 11-2.8-2.8l.1-.1A1.6 1.6 0 003 13.6H3a2 2 0 010-4h.1A1.6 1.6 0 004.7 7l-.1-.1a2 2 0 112.8-2.8l.1.1a1.6 1.6 0 001.8.3H9.5a1.6 1.6 0 001-1.5V3a2 2 0 014 0v.1a1.6 1.6 0 002.7 1.1l.1-.1a2 2 0 112.8 2.8l-.1.1a1.6 1.6 0 00-.3 1.8v.1a1.6 1.6 0 001.5 1H21a2 2 0 010 4h-.1a1.6 1.6 0 00-1.5 1z"/></svg>'
+};
+
+function renderNav(){
+  const n = $("#nav"); n.innerHTML = "";
+  [["game","Game"],["bets","Side Bets"],["stats","Stats"],["setup","Setup"]].forEach(([k,label])=>{
+    const b = el("button", view===k?"on":"", ICONS[k] + "<span>"+label+"</span>");
+    b.onclick = ()=>{ view=k; sub=null; render(); window.scrollTo(0,0); };
+    n.appendChild(b);
+  });
+}
+
+function renderHeader(){
+  const g = G();
+  $("#h-ttl").textContent = g.name || "Club Game";
+  const d = g.date ? new Date(g.date+"T12:00:00").toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric"}) : "";
+  $("#h-sub").textContent = [d, course().name].filter(Boolean).join(" · ");
+  const me = Store.s.me ? player(Store.s.me) : null;
+  $("#h-me").textContent = me ? me.name.split(" ").pop() : "Who am I?";
+  $("#h-me").onclick = pickMe;
+}
+
+function render(){
+  renderHeader(); renderNav();
+  const m = $("#main"); m.innerHTML = "";
+  if(sub && sub.type==="card")      viewCard(m, sub.gid);
+  else if(view==="game")            viewGame(m);
+  else if(view==="bets")            viewBets(m);
+  else if(view==="stats")           viewStats(m);
+  else if(view==="setup")           viewSetup(m);
+}
+
+function banners(m){
+  issues().forEach(i=> m.appendChild(el("div","banner", i.msg)) );
+}
+
+/* ---------------- GAME ---------------- */
+function viewGame(m){
+  banners(m);
+  const { rows } = teamStandings();
+  const anyScores = rows.some(r=>r.thru>0);
+
+  const c = el("div","card");
+  c.appendChild(el("div","hd",'<h3>Team standings</h3><span class="right pill">'+
+    (G().team.balls)+" best net"+(G().team.allBirdies?" + all birdies":"")+"</span>"));
+  const bd = el("div","bd flush");
+
+  const ordered = rows.slice().sort((a,b)=>{
+    if(a.thru===0 && b.thru===0) return a.g.teeTime.localeCompare(b.g.teeTime);
+    if(a.thru===0) return 1; if(b.thru===0) return -1;
+    return a.total-b.total;
+  });
+
+  ordered.forEach(r=>{
+    const b = el("button","lrow");
+    const names = r.g.pids.map(pid=>pname(pid).replace(/^(\w)\.\s*/,"")).join(" · ");
+    b.innerHTML =
+      '<span class="rank">'+(r.place||"–")+'</span>'+
+      '<span class="grow"><span style="font-weight:650">'+esc(r.g.teeTime)+'</span>'+
+        '<span class="tiny muted trunc" style="display:block">'+esc(names)+'</span></span>'+
+      '<span class="score '+cls(r.total)+'">'+(r.thru? signed(r.total) : "–")+'</span>'+
+      '<span class="tiny muted" style="width:38px;text-align:right">'+(r.thru? "thru "+r.thru : "")+'</span>'+
+      '<span class="chev"></span>';
+    b.onclick = ()=>{ sub={type:"card",gid:r.g.id}; render(); window.scrollTo(0,0); };
+    bd.appendChild(b);
+  });
+  c.appendChild(bd); m.appendChild(c);
+
+  if(!anyScores){
+    m.appendChild(el("div","empty","No scores yet. Tap a tee time to start a card."));
+  }
+
+  // individual leaderboard
+  const basis = "gross";
+  const ind = inGame().map(pid=>({ pid, ...totalFor(pid,basis), n:totalFor(pid,"net") }))
+                      .filter(r=>r.thru>0)
+                      .sort((a,b)=> a.total-b.total);
+  if(ind.length){
+    const c2 = el("div","card");
+    c2.appendChild(el("div","hd","<h3>Individual</h3>"));
+    const t = el("table"); t.innerHTML =
+      "<thead><tr><th></th><th>Player</th><th class='n'>Thru</th><th class='n'>Gross</th><th class='n'>Net</th></tr></thead>";
+    const tb = el("tbody");
+    ind.forEach((r,i)=>{
+      const ph = playingHcp(r.pid);
+      tb.appendChild(el("tr","",
+        "<td class='muted mono'>"+(i+1)+"</td>"+
+        "<td>"+esc(pname(r.pid))+(ph!=null?" <span class='tiny muted'>("+(ph>0?"+":"")+ph+")</span>":"")+"</td>"+
+        "<td class='n muted'>"+r.thru+"</td>"+
+        "<td class='n mono' style='font-weight:650'>"+r.total+"</td>"+
+        "<td class='n mono'>"+(ph!=null? r.n.total : "—")+"</td>"));
+    });
+    t.appendChild(tb);
+    const bd2 = el("div","bd flush"); bd2.appendChild(t);
+    c2.appendChild(bd2); m.appendChild(c2);
+  }
+}
+
+/* ---------------- SCORECARD ---------------- */
+let holeIdx = 0;
+let cardMode = "hole";   // "hole" | "full"
+
+function viewCard(m, gid){
+  const g = G().groups.find(x=>x.id===gid);
+  if(!g){ sub=null; return render(); }
+
+  const back = el("button","btn ghost sm","‹ All groups");
+  back.onclick = ()=>{ sub=null; render(); };
+  const bar = el("div","row"); bar.style.marginBottom="11px";
+  bar.appendChild(back);
+  const segw = el("div","seg"); segw.style.maxWidth="180px"; segw.classList.add("right");
+  [["hole","Hole"],["full","Full card"]].forEach(([k,l])=>{
+    const b=el("button",cardMode===k?"on":"",l);
+    b.onclick=()=>{ cardMode=k; render(); };
+    segw.appendChild(b);
+  });
+  bar.appendChild(segw);
+  m.appendChild(bar);
+
+  // scorer claim
+  const claim = el("div","card");
+  const cb = el("div","bd");
+  if(!g.scorer){
+    cb.innerHTML = "<div class='tiny muted' style='margin-bottom:9px'>Nobody is keeping this card yet.</div>";
+    const b = el("button","btn block","Keep this card");
+    b.onclick = ()=>{
+      if(!Store.s.me){ pickMe(()=>{ g.scorer=Store.s.me; Store.save(); render(); }); return; }
+      g.scorer = Store.s.me; Store.save(); render();
+    };
+    cb.appendChild(b);
+  } else {
+    const mine = g.scorer === Store.s.me;
+    cb.innerHTML = "<div class='row'><span class='tiny'>Card kept by <b>"+esc(pname(g.scorer))+"</b>"+
+      (mine?" (you)":"")+"</span></div>";
+    const b = el("button","btn ghost sm right", mine ? "Hand off" : "Take over");
+    b.style.marginLeft="auto";
+    b.onclick = ()=>{
+      if(mine){ g.scorer=null; Store.save(); render(); return; }
+      if(confirm("Take the card from "+pname(g.scorer)+"?")){
+        if(!Store.s.me){ pickMe(()=>{ g.scorer=Store.s.me; Store.save(); render(); }); return; }
+        g.scorer=Store.s.me; Store.save(); render();
+      }
+    };
+    $(".row",cb).appendChild(b);
+  }
+  claim.appendChild(cb); m.appendChild(claim);
+
+  const canEdit = !g.scorer || g.scorer === Store.s.me;
+
+  if(cardMode==="full"){ fullCard(m,g); }
+  else { holeCard(m,g,canEdit); }
+
+  const gs = groupScore(g);
+  const tot = el("div","card");
+  tot.appendChild(el("div","bd",
+    "<div class='row'><span>Team score</span><span class='right score "+cls(gs.total)+"'>"+
+    (gs.thru? signed(gs.total):"–")+"</span></div>"+
+    "<div class='tiny muted' style='margin-top:4px'>"+
+    (gs.thru? "Through "+gs.thru+" holes · best "+G().team.balls+" net"+(G().team.allBirdies?", every net birdie counts":"") : "No holes posted")+
+    "</div>"));
+  m.appendChild(tot);
+}
+
+function holeCard(m,g,canEdit){
+  const h = holeIdx, c = course();
+  const bar = el("div","holebar");
+  const yd = (()=>{ // show yardage from the first player's tee that has per-hole data
+    for(const pid of g.pids){ const t=teeOf(pid); if(t && t.yards) return t.yards[h]+" yds ("+t.name+")"; }
+    return "";
+  })();
+  bar.innerHTML =
+    '<button id="prev">‹</button>'+
+    '<div class="grow" style="text-align:center">'+
+      '<div class="h">'+(h+1)+'</div>'+
+      '<div class="meta">Par '+par(h)+' · Stroke '+c.siSets.menA[h]+(yd?" · "+yd:"")+'</div>'+
+    '</div>'+
+    '<button id="next">›</button>';
+  m.appendChild(bar);
+  $("#prev",bar).disabled = h===0;
+  $("#next",bar).disabled = h===H-1;
+  $("#prev",bar).onclick = ()=>{ holeIdx--; render(); };
+  $("#next",bar).onclick = ()=>{ holeIdx++; render(); };
+
+  const card = el("div","card"); const bd = el("div","bd flush");
+  g.pids.forEach(pid=>{
+    const st = strokes(pid,h);
+    const row = el("div","prow");
+    const ph = playingHcp(pid);
+    row.innerHTML =
+      '<div class="grow">'+
+        '<div class="nm">'+esc(pname(pid))+'</div>'+
+        '<div class="hc">'+(teeOf(pid)?teeOf(pid).name:"—")+
+          (ph!=null? " · plays "+(ph>0?"+":"")+ph : " · no index")+
+          (st>0? " · "+st+" stroke"+(st>1?"s":"")+" here":"")+'</div>'+
+      '</div>';
+    const stp = el("div","stepper"+(st>0?" dot":"")+(st>1?" d2":""));
+    const minus = el("button","","−"), plus = el("button","","+");
+    const inp = el("input","v"); inp.type="number"; inp.inputMode="numeric";
+    inp.value = gross(pid,h)==null ? "" : gross(pid,h);
+    inp.disabled = !canEdit; minus.disabled = !canEdit; plus.disabled = !canEdit;
+    const set = v=>{
+      const a = Store.s.scores[pid];
+      a[h] = (v===""||v==null||isNaN(v)) ? null : clamp(Math.round(v),1,20);
+      Store.save();
+      inp.value = a[h]==null ? "" : a[h];
+      refreshHoleFoot(g);
+    };
+    minus.onclick = ()=> set((gross(pid,h) ?? par(h)+1) - 1);
+    plus.onclick  = ()=> set((gross(pid,h) ?? par(h)-1) + 1);
+    inp.oninput   = ()=> { const a=Store.s.scores[pid]; a[h] = inp.value===""?null:clamp(parseInt(inp.value,10)||0,1,20); Store.save(); refreshHoleFoot(g); };
+    stp.append(minus, inp, plus);
+    row.appendChild(stp);
+    bd.appendChild(row);
+  });
+  card.appendChild(bd); m.appendChild(card);
+
+  const foot = el("div","card"); foot.id="holefoot";
+  m.appendChild(foot); refreshHoleFoot(g);
+}
+
+function refreshHoleFoot(g){
+  const f = document.getElementById("holefoot"); if(!f) return;
+  const h = holeIdx, p = par(h);
+  const nets = g.pids.map(pid=>net(pid,h)).filter(v=>v!=null).sort((a,b)=>a-b);
+  const gs = groupScore(g);
+  const hole = gs.perHole[h];
+  f.innerHTML = "<div class='bd'><div class='row'><span class='tiny muted'>This hole</span>"+
+    "<span class='right mono' style='font-weight:700'>"+(hole==null?"–":signed(hole))+"</span></div>"+
+    (nets.length? "<div class='tiny muted' style='margin-top:4px'>Net balls: "+nets.join(", ")+" · par "+p+"</div>":"")+
+    "</div>";
+}
+
+function fullCard(m,g){
+  const c = course();
+  const wrap = el("div","card"); const bd = el("div","bd flush tw");
+  const t = el("table","cardtbl");
+  let head = "<thead><tr><th>Hole</th>";
+  for(let h=0;h<9;h++) head += "<th>"+(h+1)+"</th>";
+  head += "<th>Out</th>";
+  for(let h=9;h<18;h++) head += "<th>"+(h+1)+"</th>";
+  head += "<th>In</th><th>Tot</th></tr></thead>";
+  t.innerHTML = head;
+  const tb = el("tbody");
+
+  let pr = "<tr class='par'><td>Par</td>";
+  for(let h=0;h<9;h++) pr += "<td>"+c.par[h]+"</td>";
+  pr += "<td>"+sum(c.par.slice(0,9))+"</td>";
+  for(let h=9;h<18;h++) pr += "<td>"+c.par[h]+"</td>";
+  pr += "<td>"+sum(c.par.slice(9))+"</td><td>"+parTot()+"</td></tr>";
+  tb.innerHTML = pr;
+
+  g.pids.forEach(pid=>{
+    let r = "<tr><td>"+esc(pname(pid))+"</td>";
+    const cell = h=>{
+      const v = gross(pid,h);
+      if(v==null) return "<td class='muted'>·</td>";
+      const k = v < c.par[h] ? "u" : (v > c.par[h] ? "o" : "");
+      const st = strokes(pid,h);
+      return "<td class='"+k+(st>0?" dot":"")+(st>1?" d2":"")+"' style='position:relative'>"+v+"</td>";
+    };
+    let out=0,inn=0,anyO=false,anyI=false;
+    for(let h=0;h<9;h++){ r+=cell(h); const v=gross(pid,h); if(v!=null){out+=v;anyO=true;} }
+    r += "<td class='tot'>"+(anyO?out:"·")+"</td>";
+    for(let h=9;h<18;h++){ r+=cell(h); const v=gross(pid,h); if(v!=null){inn+=v;anyI=true;} }
+    r += "<td class='tot'>"+(anyI?inn:"·")+"</td><td class='tot'>"+((anyO||anyI)?out+inn:"·")+"</td></tr>";
+    tb.insertAdjacentHTML("beforeend", r);
+  });
+  t.appendChild(tb); bd.appendChild(t); wrap.appendChild(bd); m.appendChild(wrap);
+  m.appendChild(el("div","tiny muted",
+    "Red dot = a stroke is given on that hole. Tap “Hole” above to enter scores."));
+}
+
+/* ---------------- SIDE BETS ---------------- */
+function viewBets(m){
+  const cfg = G().betsCfg;
+
+  const head = el("div","card");
+  head.appendChild(el("div","hd","<h3>Side bets</h3><span class='right pill'>"+
+    "$"+cfg.stake+"/stroke · $"+cfg.cap+" cap</span>"));
+  const hb = el("div","bd");
+  hb.innerHTML = "<div class='tiny muted' style='margin-bottom:10px'>A side is one or two players. "+
+    "A pair is scored on their <b>better ball</b>. Payout = stake × the stroke difference, capped both ways. "+
+    "Scored <b>"+(cfg.basis==="net"?"net":"gross")+"</b>.</div>";
+  const add = el("button","btn block","+ Book a bet");
+  add.onclick = ()=> betSheet(null);
+  hb.appendChild(add);
+  head.appendChild(hb); m.appendChild(head);
+
+  const live = Store.s.bets.filter(b=>!b.rejected);
+  const dead = Store.s.bets.filter(b=> b.rejected);
+
+  if(!Store.s.bets.length){
+    m.appendChild(el("div","empty","No bets booked yet."));
+  } else {
+    m.appendChild(betList("Booked ("+live.length+")", live));
+    if(dead.length) m.appendChild(betList("Rejected ("+dead.length+")", dead, true));
+  }
+
+  // per-player running P&L
+  const pl = inGame().map(pid=>({pid, n:betCount(pid), amt:betPL(pid)}))
+                     .filter(r=>r.n>0)
+                     .sort((a,b)=> b.amt-a.amt);
+  if(pl.length){
+    const c = el("div","card");
+    c.appendChild(el("div","hd","<h3>Side-bet standings</h3>"));
+    const t = el("table");
+    t.innerHTML = "<thead><tr><th>Player</th><th class='n'>Bets</th><th class='n'>P&amp;L</th></tr></thead>";
+    const tb = el("tbody");
+    pl.forEach(r=> tb.appendChild(el("tr","",
+      "<td>"+esc(pname(r.pid))+"</td><td class='n muted'>"+r.n+"</td>"+
+      "<td class='n "+(r.amt>0?"pos":r.amt<0?"neg":"zero")+"'>"+money(r.amt)+"</td>")));
+    t.appendChild(tb);
+    const bd=el("div","bd flush"); bd.appendChild(t); c.appendChild(bd); m.appendChild(c);
+  }
+}
+
+function betList(title, list, dim){
+  const c = el("div","card");
+  c.appendChild(el("div","hd","<h3>"+title+"</h3>"));
+  const bd = el("div","bd flush");
+  list.forEach(bet=>{
+    const r = betResult(bet);
+    const row = el("div","betrow"+(dim?" void":""));
+    const side = (ids, score, amt, win)=>
+      '<div class="betside">'+
+        '<span class="who '+(win?"":"muted")+'" style="'+(win?"font-weight:650":"")+'">'+ids.map(pname).map(esc).join(" &amp; ")+'</span>'+
+        '<span class="sc">'+(r.thru? score : "–")+'</span>'+
+        '<span class="amt '+(amt>0?"pos":amt<0?"neg":"zero")+'">'+(r.thru&&r.live? money(amt):"")+'</span>'+
+      '</div>';
+    row.innerHTML =
+      side(bet.a, r.a, r.amtA, r.thru>0 && r.a<r.b) +
+      '<div class="vs">VS</div>' +
+      side(bet.b, r.b, r.amtB, r.thru>0 && r.b<r.a) +
+      '<div class="row tiny muted" style="margin-top:6px">'+
+        '<span>$'+bet.stake+'/stroke · $'+bet.cap+' cap'+(r.capped?' · <b>capped</b>':'')+'</span>'+
+        '<span class="right">'+(r.thru===H? "final" : r.thru? "thru "+r.thru : "not started")+'</span>'+
+      '</div>';
+    row.onclick = ()=> betSheet(bet);
+    bd.appendChild(row);
+  });
+  c.appendChild(bd);
+  return c;
+}
+
+function betSheet(bet){
+  const isNew = !bet;
+  const draft = bet ? JSON.parse(JSON.stringify(bet))
+                    : { id:uid("b"), a:[], b:[], stake:G().betsCfg.stake, cap:G().betsCfg.cap, rejected:false };
+
+  sheet(isNew?"Book a bet":"Edit bet", inner=>{
+    const rebuild = ()=>{
+      inner.innerHTML = "";
+      inner.appendChild(el("h2","",isNew?"Book a bet":"Edit bet"));
+      ["a","b"].forEach((key,idx)=>{
+        const w = el("div"); w.style.marginBottom="13px";
+        w.appendChild(el("div","tiny",'<b>Side '+(idx?"B":"A")+'</b> <span class="muted">— tap 1 or 2 players</span>'));
+        const grid = el("div","pickgrid"); grid.style.marginTop="6px";
+        inGame().forEach(pid=>{
+          const on = draft[key].includes(pid);
+          const b = el("button","pick"+(on?" on":""),
+            esc(pname(pid))+'<span class="s">'+(teeOf(pid)?teeOf(pid).name:"")+'</span>');
+          b.onclick = ()=>{
+            const arr = draft[key], i = arr.indexOf(pid);
+            if(i>=0) arr.splice(i,1);
+            else{
+              if(arr.length>=2) arr.shift();
+              const o = key==="a"?"b":"a", j = draft[o].indexOf(pid);
+              if(j>=0) draft[o].splice(j,1);
+              arr.push(pid);
+            }
+            rebuild();
+          };
+          grid.appendChild(b);
+        });
+        w.appendChild(grid); inner.appendChild(w);
+      });
+
+      const g2 = el("div","grid2");
+      g2.innerHTML =
+        '<label class="f"><span>$ per stroke</span><input type="number" id="bs" value="'+draft.stake+'" min="0" step="1"></label>'+
+        '<label class="f"><span>Cap ($)</span><input type="number" id="bc" value="'+draft.cap+'" min="0" step="1"></label>';
+      inner.appendChild(g2);
+      $("#bs",inner).oninput = e=> draft.stake = Math.max(0, parseInt(e.target.value,10)||0);
+      $("#bc",inner).oninput = e=> draft.cap   = Math.max(0, parseInt(e.target.value,10)||0);
+
+      const rej = el("label","f row");
+      rej.style.gap="8px";
+      const cbx = el("input"); cbx.type="checkbox"; cbx.checked = draft.rejected; cbx.style.width="18px";
+      cbx.onchange = ()=> draft.rejected = cbx.checked;
+      rej.append(cbx, el("span","","Rejected / voided — keep it on the sheet but pay nothing"));
+      rej.querySelector("span").style.cssText = "display:inline;font-size:13px;text-transform:none;letter-spacing:0;color:var(--ink);font-weight:400;margin:0";
+      inner.appendChild(rej);
+
+      const row = el("div","row"); row.style.marginTop="6px";
+      const save = el("button","btn grow", isNew?"Book it":"Save");
+      save.disabled = !draft.a.length || !draft.b.length;
+      save.onclick = ()=>{
+        if(isNew) Store.s.bets.push(draft);
+        else Object.assign(bet, draft);
+        Store.save(); closeSheet(); render();
+      };
+      row.appendChild(save);
+      if(!isNew){
+        const del = el("button","btn ghost","Delete");
+        del.style.color="var(--red)";
+        del.onclick = ()=>{
+          if(!confirm("Delete this bet?")) return;
+          Store.s.bets = Store.s.bets.filter(x=>x.id!==bet.id);
+          Store.save(); closeSheet(); render();
+        };
+        row.appendChild(del);
+      }
+      inner.appendChild(row);
+    };
+    rebuild();
+  });
+}
+
+/* ---------------- STATS ---------------- */
+function viewStats(m){
+  banners(m);
+  const L = ledger();
+  const cfg = G();
+
+  // skins
+  const c = el("div","card");
+  c.appendChild(el("div","hd","<h3>Skins</h3><span class='right pill'>"+
+    (cfg.skins.basis==="net"?"net":"gross")+" · "+money(L.skinValue)+" each</span>"));
+  const bd = el("div","bd flush");
+  if(!L.sk.length){
+    bd.appendChild(el("div","empty","No skins yet. A skin is the only birdie-or-better on a hole."));
+  } else {
+    const t = el("table");
+    t.innerHTML = "<thead><tr><th class='n'>Hole</th><th>Winner</th><th class='n'>Score</th><th class='n'>Worth</th></tr></thead>";
+    const tb = el("tbody");
+    L.sk.forEach(s=>{
+      const label = s.under>=3?"albatross":s.under===2?"eagle":"birdie";
+      tb.appendChild(el("tr","",
+        "<td class='n mono'>"+(s.hole+1)+"</td>"+
+        "<td>"+esc(pname(s.pid))+" <span class='tiny muted'>"+label+"</span></td>"+
+        "<td class='n mono u'>"+s.score+"</td>"+
+        "<td class='n mono'>"+money(L.skinValue)+"</td>"));
+    });
+    t.appendChild(tb); bd.appendChild(t);
+  }
+  c.appendChild(bd);
+  c.appendChild(el("div","bd",
+    "<div class='tiny muted'>Skins pot "+money(L.skinsPot)+" ("+inGame().length+" × "+money(cfg.money.skinsShare)+
+    ") ÷ "+L.skinCount+" skin"+(L.skinCount===1?"":"s")+" = <b>"+money(L.skinValue)+"</b> a skin. "+
+    "A skin needs a birdie or better and nobody else matching it.</div>"));
+  m.appendChild(c);
+
+  // money ledger
+  const c2 = el("div","card");
+  c2.appendChild(el("div","hd","<h3>Money</h3><span class='right pill grey'>"+money(cfg.money.entry)+" in</span>"));
+  const bd2 = el("div","bd flush tw");
+  const t2 = el("table");
+  t2.innerHTML = "<thead><tr><th>Player</th><th class='n'>Team</th><th class='n'>Skins</th><th class='n'>Sides</th><th class='n'>Entry</th><th class='n'>Net</th></tr></thead>";
+  const tb2 = el("tbody");
+  L.rows.forEach(r=> tb2.appendChild(el("tr","",
+    "<td class='trunc'>"+esc(pname(r.pid))+"</td>"+
+    "<td class='n mono "+(r.team?"pos":"zero")+"'>"+money(r.team)+"</td>"+
+    "<td class='n mono "+(r.skins?"pos":"zero")+"'>"+money(r.skins)+"</td>"+
+    "<td class='n mono "+(r.bets>0?"pos":r.bets<0?"neg":"zero")+"'>"+money(r.bets)+"</td>"+
+    "<td class='n mono muted'>"+money(r.entry)+"</td>"+
+    "<td class='n mono "+(r.net>0?"pos":r.net<0?"neg":"zero")+"' style='font-weight:700'>"+money(r.net)+"</td>")));
+  t2.appendChild(tb2); bd2.appendChild(t2); c2.appendChild(bd2);
+  const bal = sum(L.rows.map(r=>r.net));
+  c2.appendChild(el("div","bd","<div class='tiny muted'>Team purse "+money(L.teamPot)+
+    " · skins purse "+money(L.skinsPot)+
+    " · table balance <b class='"+(Math.abs(bal)<0.5?"zero":"neg")+"'>"+money(bal)+"</b>"+
+    (Math.abs(bal)>0.5?" (rounding on skins, and payouts not yet fully allocated)":"")+"</div>"));
+  m.appendChild(c2);
+
+  // team detail
+  const { rows } = teamStandings();
+  const c3 = el("div","card");
+  c3.appendChild(el("div","hd","<h3>Team payouts</h3>"));
+  const t3 = el("table");
+  t3.innerHTML = "<thead><tr><th class='n'>Pl</th><th>Group</th><th class='n'>Score</th><th class='n'>Each</th></tr></thead>";
+  const tb3 = el("tbody");
+  rows.slice().sort((a,b)=>(a.place||99)-(b.place||99)).forEach(r=>{
+    const rate = r.place ? (cfg.money.payouts[r.place-1]||0) : 0;
+    tb3.appendChild(el("tr","",
+      "<td class='n muted'>"+(r.place||"–")+"</td>"+
+      "<td>"+esc(r.g.teeTime)+"</td>"+
+      "<td class='n mono "+cls(r.total)+"'>"+(r.thru?signed(r.total):"–")+"</td>"+
+      "<td class='n mono "+(rate?"pos":"zero")+"'>"+money(rate)+"</td>"));
+  });
+  t3.appendChild(tb3);
+  const bd3 = el("div","bd flush"); bd3.appendChild(t3); c3.appendChild(bd3);
+  m.appendChild(c3);
+}
+
+/* ---------------- SETUP ---------------- */
+function viewSetup(m){
+  banners(m);
+  if(sub && sub.type==="players")  return setupPlayers(m);
+  if(sub && sub.type==="import")   return setupImport(m);
+  if(sub && sub.type==="field")    return setupField(m);
+  if(sub && sub.type==="groups")   return setupGroups(m);
+  if(sub && sub.type==="draw")     return setupDraw(m);
+  if(sub && sub.type==="course")   return setupCourse(m);
+  if(sub && sub.type==="rules")    return setupRules(m);
+
+  const c = el("div","card"); const bd = el("div","bd flush");
+  const link = (t,d,go)=>{
+    const b = el("button","setuplink",
+      "<span class='grow'>"+t+"<span class='d'>"+d+"</span></span><span class='chev'></span>");
+    b.onclick = ()=>{ sub={type:go}; render(); window.scrollTo(0,0); };
+    bd.appendChild(b);
+  };
+  link("Player repository", Store.s.players.length+" players on file", "players");
+  link("Today's field", inGame().length+" playing · tees & indexes", "field");
+  link("Build teams", G().draw ? (DRAW_METHODS.find(x=>x[0]===G().draw.method)||[,"Custom"])[1] : "Not built yet", "draw");
+  link("Groups & tee times", G().groups.length+" groups", "groups");
+  link("Course", course().name+" · "+course().tees.length+" tees", "course");
+  link("Game rules & money", "Format, handicaps, stakes, purse", "rules");
+  c.appendChild(bd); m.appendChild(c);
+
+  const d = el("div","card");
+  d.appendChild(el("div","hd","<h3>Data</h3>"));
+  const db = el("div","bd");
+  const ex = el("button","btn ghost block","Export game as JSON");
+  ex.onclick = exportJSON; ex.style.marginBottom="8px";
+  const cl = el("button","btn ghost block","Clear all scores");
+  cl.style.marginBottom="8px";
+  cl.onclick = ()=>{
+    if(!confirm("Erase every score in this game? Bets, groups and players stay.")) return;
+    Object.keys(Store.s.scores).forEach(k=> Store.s.scores[k] = new Array(H).fill(null));
+    Store.save(); render();
+  };
+  const rs = el("button","btn danger block","Reset to the seeded Sunday game");
+  rs.onclick = ()=>{
+    if(!confirm("Throw away everything and reload the 26 Jul 2026 seed?")) return;
+    Store.reset(); sub=null; render();
+  };
+  db.append(ex,cl,rs);
+  d.appendChild(db); m.appendChild(d);
+
+  m.appendChild(el("div","tiny muted","Build "+BUILD+" · scores are saved on this device. Firebase sync is wired but not yet configured."));
+}
+
+function backBtn(m,label){
+  const b = el("button","btn ghost sm",'‹ '+(label||"Setup"));
+  b.onclick = ()=>{ sub=null; render(); };
+  const w = el("div"); w.style.marginBottom="11px"; w.appendChild(b);
+  m.appendChild(w);
+}
+
+function setupPlayers(m){
+  backBtn(m);
+  const c = el("div","card");
+  c.appendChild(el("div","hd","<h3>Player repository</h3><span class='right pill'>"+Store.s.players.length+"</span>"));
+  const bd = el("div","bd flush");
+  Store.s.players.slice().sort((a,b)=>a.name.localeCompare(b.name)).forEach(p=>{
+    const playing = inGame().includes(p.id);
+    const b = el("button","lrow");
+    b.innerHTML = "<span class='grow'><b>"+esc(p.name)+"</b>"+
+      "<span class='tiny muted' style='display:block'>"+
+        (p.index==null? "no index" : "Index "+p.index.toFixed(1))+
+        " · "+ (course().tees.find(t=>t.id===p.homeTee)||{name:"—"}).name +
+      "</span></span>"+
+      (playing? "<span class='pill'>playing</span>":"")+
+      "<span class='chev'></span>";
+    b.onclick = ()=> playerSheet(p);
+    bd.appendChild(b);
+  });
+  c.appendChild(bd); m.appendChild(c);
+  const row = el("div","row");
+  const add = el("button","btn grow","+ New player");
+  add.onclick = ()=> playerSheet(null);
+  const imp = el("button","btn ghost grow","Import from CSV");
+  imp.onclick = ()=>{ sub={type:"import"}; render(); window.scrollTo(0,0); };
+  row.append(add, imp);
+  m.appendChild(row);
+}
+
+function playerSheet(p){
+  const isNew = !p;
+  const d = p ? Object.assign({},p) : { id:uid("p"), name:"", index:null, sex:"M", email:"", homeTee:"blue", notes:"" };
+  sheet(isNew?"New player":"Edit player", inner=>{
+    inner.innerHTML =
+      '<h2>'+(isNew?"New player":"Edit player")+'</h2>'+
+      '<label class="f"><span>Name</span><input type="text" id="pn" value="'+esc(d.name)+'" placeholder="First Last"></label>'+
+      '<div class="grid2">'+
+        '<label class="f"><span>Handicap index</span><input type="number" id="pi" step="0.1" value="'+(d.index==null?"":d.index)+'" placeholder="e.g. 8.4"></label>'+
+        '<label class="f"><span>Tees</span><select id="pt">'+
+          course().tees.map(t=>'<option value="'+t.id+'"'+(t.id===d.homeTee?" selected":"")+'>'+esc(t.name)+'</option>').join("")+
+        '</select></label>'+
+      '</div>'+
+      '<div class="grid2">'+
+        '<label class="f"><span>Rating set</span><select id="px">'+
+          '<option value="M"'+(d.sex==="M"?" selected":"")+'>Men\'s</option>'+
+          '<option value="F"'+(d.sex==="F"?" selected":"")+'>Women\'s</option>'+
+        '</select></label>'+
+        '<label class="f"><span>Email (optional)</span><input type="email" id="pe" value="'+esc(d.email)+'"></label>'+
+      '</div>';
+    const row = el("div","row"); row.style.marginTop="4px";
+    const save = el("button","btn grow","Save");
+    save.onclick = ()=>{
+      d.name  = $("#pn",inner).value.trim();
+      const iv = $("#pi",inner).value;
+      d.index = iv==="" ? null : parseFloat(iv);
+      d.homeTee = $("#pt",inner).value;
+      d.sex   = $("#px",inner).value;
+      d.email = $("#pe",inner).value.trim();
+      if(!d.name) return alert("Give the player a name.");
+      if(isNew){
+        Store.s.players.push(d);
+        Store.s.scores[d.id] = new Array(H).fill(null);
+      } else {
+        Object.assign(p,d);
+      }
+      Store.save(); closeSheet(); render();
+    };
+    row.appendChild(save);
+    if(!isNew){
+      const del = el("button","btn ghost","Delete");
+      del.style.color = "var(--red)";
+      del.onclick = ()=>{
+        if(inGame().includes(p.id)) return alert("Take them out of today's field first.");
+        if(!confirm("Delete "+p.name+" from the repository?")) return;
+        Store.s.players = Store.s.players.filter(x=>x.id!==p.id);
+        delete Store.s.scores[p.id];
+        Store.save(); closeSheet(); render();
+      };
+      row.appendChild(del);
+    }
+    inner.appendChild(row);
+  });
+}
+
+/* ---------------- CSV IMPORT ---------------- */
+function normName(s){
+  return String(s||"").toLowerCase().replace(/['’.]/g,"").replace(/[^a-z\s]/g," ").replace(/\s+/g," ").trim();
+}
+function splitCSVLine(line){
+  const out=[]; let cur="", inQ=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(inQ){
+      if(c==='"'){ if(line[i+1]==='"'){cur+='"'; i++;} else inQ=false; }
+      else cur+=c;
+    } else if(c==='"') inQ=true;
+    else if(c===','){ out.push(cur); cur=""; }
+    else cur+=c;
+  }
+  out.push(cur);
+  return out.map(s=>s.trim());
+}
+/** Parses a roster CSV, matching rows to existing players where it can.
+    Header row is optional and matched loosely; falls back to
+    Name, Index[, Email[, Tee]] column order if no header is found. */
+function parseRosterCSV(text){
+  const lines = String(text||"").split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  if(!lines.length) return [];
+  const head = splitCSVLine(lines[0]).map(h=>h.toLowerCase());
+  const findCol = (...keys)=> head.findIndex(h=> keys.some(k=>h.includes(k)));
+  let ci = { name: findCol("name","player"), idx: findCol("index","hcp","handicap"), email: findCol("email"), tee: findCol("tee") };
+  const hasHeader = ci.name>=0 || ci.idx>=0;
+  let start = 0;
+  if(hasHeader) start = 1;
+  else ci = { name:0, idx:1, email:2, tee:3 };
+
+  const existingByNorm = {}, byLast = {};
+  Store.s.players.forEach(p=>{
+    existingByNorm[normName(p.name)] = p.id;
+    const parts = normName(p.name).split(" "), last = parts[parts.length-1];
+    (byLast[last] = byLast[last]||[]).push(p.id);
+  });
+
+  const rows = [];
+  for(let i=start;i<lines.length;i++){
+    const cells = splitCSVLine(lines[i]);
+    const name = (ci.name>=0 ? cells[ci.name] : "") || "";
+    if(!name) continue;
+    const idxRaw = ci.idx>=0 ? cells[ci.idx] : "";
+    const idxNum = idxRaw==="" ? null : parseFloat(String(idxRaw).replace(/[^0-9.\-]/g,""));
+    const email = ci.email>=0 ? (cells[ci.email]||"") : "";
+    const teeName = ci.tee>=0 ? (cells[ci.tee]||"") : "";
+    let teeId = null;
+    if(teeName){
+      const t = course().tees.find(t=> t.name.toLowerCase()===teeName.trim().toLowerCase());
+      if(t) teeId = t.id;
+    }
+    const n = normName(name);
+    let matchId = existingByNorm[n] || null;
+    if(!matchId){
+      const parts = n.split(" "), last = parts[parts.length-1];
+      if(byLast[last] && byLast[last].length===1) matchId = byLast[last][0];
+    }
+    if(!matchId){
+      const reversed = n.split(" ").reverse().join(" ");
+      matchId = existingByNorm[reversed] || null;
+    }
+    rows.push({ name, index: (idxNum==null||isNaN(idxNum))?null:idxNum, email, tee:teeName, teeId, matchId: matchId || "__new__" });
+  }
+  return rows;
+}
+
+let importState = { raw:"", rows:null };
+
+function setupImport(m){
+  backBtn(m,"Players");
+  const c = el("div","card");
+  c.appendChild(el("div","hd","<h3>Import from CSV</h3>"));
+  const bd = el("div","bd");
+  bd.appendChild(el("div","tiny muted","Works with a GHIN roster export or any spreadsheet saved as CSV — needs a name column and an index/handicap column; email and tees are optional. Existing players are matched by name; review the match for every row before importing."));
+
+  const fileInp = el("input"); fileInp.type="file"; fileInp.accept=".csv,text/csv"; fileInp.style.marginTop="9px";
+  fileInp.onchange = ()=>{
+    const f = fileInp.files[0]; if(!f) return;
+    const reader = new FileReader();
+    reader.onload = ()=>{ importState.raw = String(reader.result); importState.rows=null; render(); };
+    reader.readAsText(f);
+  };
+  bd.appendChild(fileInp);
+
+  const ta = el("textarea");
+  ta.style.cssText = "width:100%;min-height:120px;margin-top:9px;border:1px solid var(--line);border-radius:9px;padding:9px;background:#fff;font:12px/1.4 ui-monospace,SFMono-Regular,Consolas,monospace";
+  ta.placeholder = "Name,Index\nC. O'Shea,8.4\nM. DeSevo,15.1\n...";
+  ta.value = importState.raw;
+  ta.oninput = ()=>{ importState.raw = ta.value; };
+  bd.appendChild(ta);
+
+  const parseBtn = el("button","btn block","Parse"); parseBtn.style.marginTop="9px";
+  parseBtn.onclick = ()=>{ importState.rows = parseRosterCSV(importState.raw); render(); };
+  bd.appendChild(parseBtn);
+  c.appendChild(bd); m.appendChild(c);
+
+  if(importState.rows){
+    if(!importState.rows.length){
+      m.appendChild(el("div","empty","Nothing parsed — check there's a name column."));
+    } else {
+      const pc = el("div","card");
+      pc.appendChild(el("div","hd","<h3>Preview</h3><span class='right pill'>"+importState.rows.length+" rows</span>"));
+      const pbd = el("div","bd flush");
+      importState.rows.forEach(row=>{
+        const rw = el("div","prow");
+        rw.innerHTML = "<div class='grow'><div class='nm'>"+esc(row.name)+"</div>"+
+          "<div class='hc'>index "+(row.index==null?"—":row.index)+(row.email?" · "+esc(row.email):"")+(row.tee?" · "+esc(row.tee):"")+"</div></div>";
+        const sel = el("select"); sel.style.cssText="max-width:150px;flex:none";
+        const optSkip = el("option","","Skip"); optSkip.value="__skip__";
+        const optNew  = el("option","","Create new"); optNew.value="__new__";
+        sel.append(optSkip, optNew);
+        Store.s.players.slice().sort((a,b)=>a.name.localeCompare(b.name)).forEach(p=>{
+          const o = el("option","",esc(p.name)); o.value=p.id; sel.appendChild(o);
+        });
+        sel.value = row.matchId || "__new__";
+        sel.onchange = ()=>{ row.matchId = sel.value; };
+        rw.appendChild(sel);
+        pbd.appendChild(rw);
+      });
+      pc.appendChild(pbd); m.appendChild(pc);
+
+      const doImport = el("button","btn block","Import");
+      doImport.onclick = ()=>{
+        let updated=0, created=0;
+        importState.rows.forEach(row=>{
+          if(!row.matchId || row.matchId==="__skip__") return;
+          if(row.matchId==="__new__"){
+            const np = { id:uid("p"), name:row.name, index:row.index, sex:"M", email:row.email||"", homeTee: row.teeId || course().tees[0].id, notes:"" };
+            Store.s.players.push(np);
+            Store.s.scores[np.id] = new Array(H).fill(null);
+            created++;
+          } else {
+            const p = player(row.matchId);
+            if(p){
+              if(row.index!=null) p.index = row.index;
+              if(row.email) p.email = row.email;
+              if(row.teeId) p.homeTee = row.teeId;
+              updated++;
+            }
+          }
+        });
+        Store.save();
+        alert("Imported: "+updated+" updated, "+created+" created.");
+        importState = { raw:"", rows:null };
+        sub = { type:"players" }; render();
+      };
+      m.appendChild(doImport);
+    }
+  }
+}
+
+function setupField(m){
+  backBtn(m);
+  const c = el("div","card");
+  c.appendChild(el("div","hd","<h3>Today's field</h3><span class='right pill'>"+inGame().length+"</span>"));
+  const bd = el("div","bd flush");
+  Store.s.players.slice().sort((a,b)=>a.name.localeCompare(b.name)).forEach(p=>{
+    const on = !!G().entrants[p.id];
+    const row = el("div","prow");
+    const ch = courseHcp(p.id), ph = playingHcp(p.id);
+    row.innerHTML = "<div class='grow'><div class='nm'>"+esc(p.name)+"</div>"+
+      "<div class='hc'>"+(p.index==null? "no index — gross only"
+        : "Index "+p.index.toFixed(1)+(ch!=null? " · CH "+ch+(ph!==ch?" · plays "+ph:"") : ""))+"</div></div>";
+    const sel = el("select"); sel.style.width="130px"; sel.style.flex="none";
+    course().tees.forEach(t=>{
+      const o = el("option","",esc(t.name)); o.value=t.id;
+      if(on && G().entrants[p.id].teeId===t.id) o.selected=true;
+      else if(!on && p.homeTee===t.id) o.selected=true;
+      sel.appendChild(o);
+    });
+    sel.disabled = !on;
+    sel.onchange = ()=>{ G().entrants[p.id].teeId = sel.value; Store.save(); render(); };
+    const tog = el("button","btn sm "+(on?"":"ghost"), on?"In":"Add");
+    tog.style.flex="none"; tog.style.width="56px";
+    tog.onclick = ()=>{
+      if(on){
+        const g = groupOf(p.id);
+        if(g){ g.pids = g.pids.filter(x=>x!==p.id); markAdjusted(); }
+        delete G().entrants[p.id];
+      } else {
+        G().entrants[p.id] = { teeId: p.homeTee };
+        if(!Store.s.scores[p.id]) Store.s.scores[p.id] = new Array(H).fill(null);
+      }
+      Store.save(); render();
+    };
+    row.append(sel, tog);
+    bd.appendChild(row);
+  });
+  c.appendChild(bd); m.appendChild(c);
+}
+
+function setupGroups(m){
+  backBtn(m);
+  const g0 = G();
+  if(g0.draw){
+    const meth = DRAW_METHODS.find(x=>x[0]===g0.draw.method);
+    m.appendChild(el("div","banner",
+      "<b>"+(meth?meth[1]:g0.draw.method)+"</b> · applied "+new Date(g0.draw.appliedAt).toLocaleString()+
+      (g0.draw.manuallyAdjusted? " · <b>manually adjusted since</b> — no longer exactly what the draw produced":"")));
+  }
+  const unassigned = inGame().filter(pid=> !groupOf(pid));
+  if(unassigned.length){
+    m.appendChild(el("div","banner","<b>"+unassigned.length+" player(s) not in a group:</b> "+
+      unassigned.map(pname).map(esc).join(", ")));
+  }
+  G().groups.forEach(g=>{
+    const c = el("div","card");
+    const hd = el("div","hd");
+    const ti = el("input"); ti.type="text"; ti.value=g.teeTime; ti.style.maxWidth="120px";
+    ti.onchange = ()=>{ g.teeTime = ti.value; Store.save(); render(); };
+    hd.appendChild(ti);
+    const del = el("button","btn ghost sm right","Remove");
+    del.style.color="var(--red)"; del.style.marginLeft="auto";
+    del.onclick = ()=>{
+      if(!confirm("Remove the "+g.teeTime+" group? Players go back to unassigned.")) return;
+      G().groups = G().groups.filter(x=>x.id!==g.id); markAdjusted(); Store.save(); render();
+    };
+    hd.appendChild(del);
+    c.appendChild(hd);
+    const bd = el("div","bd");
+    const bi = balanceInfo, tot = g.pids.length? sum(g.pids.map(pid=>bi(pid).value)) : 0;
+    if(g.pids.length) bd.appendChild(el("div","tiny muted",
+      "Total handicap "+tot.toFixed(1)+" · avg "+(tot/g.pids.length).toFixed(1)+
+      (g.pids.some(pid=>bi(pid).estimated)?" (some estimated — no index on file)":"")));
+    const grid = el("div","pickgrid"); grid.style.marginTop="7px";
+    inGame().forEach(pid=>{
+      const og = groupOf(pid);
+      const mine = og && og.id===g.id;
+      if(og && !mine) return;                       // only show free players + mine
+      const b = el("button","pick"+(mine?" on":""),
+        esc(pname(pid))+'<span class="s">'+(teeOf(pid)?teeOf(pid).name:"")+'</span>');
+      b.onclick = ()=>{
+        if(mine) g.pids = g.pids.filter(x=>x!==pid);
+        else g.pids.push(pid);
+        markAdjusted(); Store.save(); render();
+      };
+      grid.appendChild(b);
+    });
+    bd.appendChild(grid);
+    c.appendChild(bd); m.appendChild(c);
+  });
+  const add = el("button","btn block","+ Add a group");
+  add.onclick = ()=>{
+    G().groups.push({ id:uid("g"), teeTime:"—", pids:[], scorer:null });
+    markAdjusted(); Store.save(); render();
+  };
+  m.appendChild(add);
+}
+
+/* ---------------- BUILD TEAMS ---------------- */
+let draftState = { method:null, teamSize:null, preview:null };
+
+function setupDraw(m){
+  backBtn(m);
+  const g = G();
+  if(!draftState.method) draftState.method = (g.draw && g.draw.method!=="committee" && g.draw.method) || "abcd";
+  if(!draftState.teamSize) draftState.teamSize = (g.draw && g.draw.teamSize) ||
+    Math.max(2, Math.round(inGame().length / (g.groups.length||6)));
+
+  const head = el("div","card");
+  head.appendChild(el("div","hd","<h3>Build teams</h3>"));
+  const hb = el("div","bd");
+  hb.appendChild(el("div","tiny muted","Choose how today's teams get formed. Tee times stay the same where possible — this only decides who's grouped with whom."));
+  const grid = el("div","pickgrid"); grid.style.marginTop="9px";
+  DRAW_METHODS.forEach(([k,label,desc])=>{
+    const b = el("button","pick"+(draftState.method===k?" on":""), esc(label)+'<span class="s">'+esc(desc)+'</span>');
+    b.onclick = ()=>{ draftState.method=k; draftState.preview=null; render(); };
+    grid.appendChild(b);
+  });
+  hb.appendChild(grid);
+
+  if(draftState.method==="committee"){
+    hb.appendChild(el("div","banner","<b>Committee mode</b> — no draw runs. Use “Groups &amp; tee times” below to hand-assign players."));
+    const gob = el("button","btn ghost block","Go to Groups & tee times");
+    gob.style.marginTop="9px";
+    gob.onclick = ()=>{
+      g.draw = { method:"committee", teamSize:draftState.teamSize, seed:null, appliedAt:new Date().toISOString(), manuallyAdjusted:false };
+      Store.save(); sub={type:"groups"}; render();
+    };
+    hb.appendChild(gob);
+  } else {
+    const ts = el("label","f"); ts.style.marginTop="11px";
+    ts.innerHTML = "<span>Players per team</span>";
+    const inp = el("input"); inp.type="number"; inp.min="2"; inp.max="8"; inp.value=draftState.teamSize;
+    inp.oninput = ()=>{ draftState.teamSize = clamp(parseInt(inp.value,10)||4,2,8); draftState.preview=null; };
+    ts.appendChild(inp); hb.appendChild(ts);
+
+    const row = el("div","row"); row.style.marginTop="9px";
+    const gen = el("button","btn grow", draftState.preview? "Reroll":"Generate");
+    gen.onclick = ()=>{
+      const seed = newSeed();
+      const teams = genTeams(draftState.method, draftState.teamSize, seed);
+      draftState.preview = { method:draftState.method, teamSize:draftState.teamSize, seed, teams,
+        rerolls: draftState.preview ? draftState.preview.rerolls+1 : 0 };
+      render();
+    };
+    row.appendChild(gen);
+    hb.appendChild(row);
+  }
+  head.appendChild(hb); m.appendChild(head);
+
+  if(draftState.preview && draftState.method!=="committee"){
+    const teams = draftState.preview.teams;
+    const { totals, avgs, spread } = draftStats(teams);
+    const anyEstimated = teams.some(t=> t.some(pid=> balanceInfo(pid).estimated));
+
+    const pc = el("div","card");
+    pc.appendChild(el("div","hd","<h3>Preview</h3><span class='right pill'>spread "+spread.toFixed(1)+"</span>"));
+    const pb = el("div","bd flush");
+    teams.forEach((t,i)=>{
+      const row = el("div","prow");
+      row.innerHTML = "<div class='grow'><div class='nm'>Team "+(i+1)+"</div>"+
+        "<div class='hc'>"+t.map(pid=>pname(pid).replace(/^(\w)\.\s*/,"")).join(", ")+"</div></div>"+
+        "<div class='tiny muted' style='text-align:right;flex:none'>total "+totals[i].toFixed(1)+"<br>avg "+avgs[i].toFixed(1)+"</div>";
+      pb.appendChild(row);
+    });
+    pc.appendChild(pb);
+    if(anyEstimated) pc.appendChild(el("div","bd","<div class='tiny muted'>~ players without an index on file were treated as the field average, just for balancing — enter their real index when you have it.</div>"));
+    m.appendChild(pc);
+
+    const apply = el("button","btn block","Apply this draw");
+    apply.onclick = ()=>{
+      if(!confirm("Replace the current groups with this draw?")) return;
+      applyDraw(teams, {
+        method: draftState.preview.method, teamSize: draftState.preview.teamSize,
+        seed: draftState.preview.seed, rerolls: draftState.preview.rerolls,
+        appliedAt: new Date().toISOString()
+      });
+      draftState.preview=null; sub=null; render();
+    };
+    m.appendChild(apply);
+  }
+
+  if(g.draw){
+    const meth = DRAW_METHODS.find(x=>x[0]===g.draw.method);
+    const info = el("div","tiny muted"); info.style.margin="4px 2px 0";
+    info.textContent = "Current groups: "+(meth?meth[1]:g.draw.method)+" · applied "+new Date(g.draw.appliedAt).toLocaleString()+
+      (g.draw.seed!=null? " · seed "+g.draw.seed : "")+
+      (g.draw.rerolls? " · rerolled "+g.draw.rerolls+"×before applying":"")+
+      (g.draw.manuallyAdjusted? " · manually adjusted since":"");
+    m.appendChild(info);
+  }
+}
+
+function setupCourse(m){
+  backBtn(m);
+  const c = course();
+  const head = el("div","card");
+  head.appendChild(el("div","hd","<h3>"+esc(c.name)+"</h3><span class='right pill'>Par "+parTot()+"</span>"));
+  head.appendChild(el("div","bd","<div class='tiny muted'>"+esc(c.loc)+
+    " · hole handicaps and ratings as re-issued by the club, effective 1 Apr 2026. "+
+    "Men playing Gold through White/Green use one stroke-index set; Green through Red use another.</div>"));
+  m.appendChild(head);
+
+  const t = el("div","card");
+  t.appendChild(el("div","hd","<h3>Tees</h3>"));
+  const bd = el("div","bd flush tw");
+  const tb = el("table");
+  tb.innerHTML = "<thead><tr><th>Tee</th><th class='n'>Yds</th><th class='n'>Rating</th><th class='n'>Slope</th><th class='n'>Scr</th></tr></thead>";
+  const body = el("tbody");
+  c.tees.forEach(te=>{
+    const tr = el("tr");
+    tr.innerHTML = "<td>"+esc(te.name)+"</td><td class='n mono muted'>"+(te.total||"—")+"</td>";
+    ["rating","slope"].forEach(k=>{
+      const td = el("td","n");
+      const i = el("input"); i.type="number"; i.step = k==="rating"?"0.1":"1";
+      i.value = te[k]==null?"":te[k]; i.style.width="62px"; i.style.textAlign="right"; i.style.padding="5px 6px";
+      i.onchange = ()=>{ te[k] = i.value===""?null:parseFloat(i.value); Store.save(); render(); };
+      td.appendChild(i); tr.appendChild(td);
+    });
+    tr.appendChild(el("td","n tiny muted", te.si==="menA"?"A":"B"));
+    body.appendChild(tr);
+  });
+  tb.appendChild(body); bd.appendChild(tb); t.appendChild(bd);
+  t.appendChild(el("div","bd","<div class='tiny muted'>Women's ratings are stored separately and used automatically for anyone set to the women's rating set.</div>"));
+  m.appendChild(t);
+
+  const h = el("div","card");
+  h.appendChild(el("div","hd","<h3>Holes</h3>"));
+  const hb = el("div","bd flush tw");
+  const ht = el("table","cardtbl");
+  let head2 = "<thead><tr><th>Hole</th>"; for(let i=0;i<18;i++) head2+="<th>"+(i+1)+"</th>"; head2+="</tr></thead>";
+  ht.innerHTML = head2;
+  const hbody = el("tbody");
+  const mkrow = (label, arr)=>{
+    let r = "<tr><td>"+label+"</td>";
+    arr.forEach(v=> r += "<td>"+v+"</td>");
+    r += "</tr>";
+    hbody.insertAdjacentHTML("beforeend", r);
+  };
+  mkrow("Par", c.par);
+  mkrow("Hcp A", c.siSets.menA);
+  mkrow("Hcp B", c.siSets.menB);
+  mkrow("Hcp W", c.siSets.ladies);
+  ht.appendChild(hbody); hb.appendChild(ht); h.appendChild(hb);
+  m.appendChild(h);
+}
+
+function setupRules(m){
+  backBtn(m);
+  const g = G();
+
+  const c1 = el("div","card");
+  c1.appendChild(el("div","hd","<h3>The game</h3>"));
+  const b1 = el("div","bd");
+  b1.innerHTML =
+    '<label class="f"><span>Name</span><input type="text" id="gn" value="'+esc(g.name)+'"></label>'+
+    '<label class="f"><span>Date</span><input type="date" id="gd" value="'+esc(g.date)+'"></label>'+
+    '<label class="f"><span>Net balls counted per hole</span><input type="number" id="gb" min="1" max="4" value="'+g.team.balls+'"></label>';
+  const bird = el("label","row"); bird.style.marginBottom="4px"; bird.style.gap="8px";
+  const bcb = el("input"); bcb.type="checkbox"; bcb.checked=g.team.allBirdies; bcb.style.width="18px";
+  bcb.onchange = ()=>{ g.team.allBirdies=bcb.checked; Store.save(); render(); };
+  bird.append(bcb, el("span","","Every net birdie-or-better counts, even beyond that number"));
+  bird.lastChild.style.fontSize="13px";
+  b1.appendChild(bird);
+  c1.appendChild(b1); m.appendChild(c1);
+  $("#gn",b1).onchange = e=>{ g.name=e.target.value; Store.save(); renderHeader(); };
+  $("#gd",b1).onchange = e=>{ g.date=e.target.value; Store.save(); renderHeader(); };
+  $("#gb",b1).onchange = e=>{ g.team.balls=clamp(parseInt(e.target.value,10)||2,1,4); Store.save(); render(); };
+
+  const c2 = el("div","card");
+  c2.appendChild(el("div","hd","<h3>Handicaps</h3>"));
+  const b2 = el("div","bd");
+  const seg = el("div","seg"); seg.style.marginBottom="11px";
+  [["full","Full"],["low","Off low man"],["pct","Percentage"]].forEach(([k,l])=>{
+    const b = el("button", g.allowance.mode===k?"on":"", l);
+    b.onclick = ()=>{ g.allowance.mode=k; Store.save(); render(); };
+    seg.appendChild(b);
+  });
+  b2.appendChild(seg);
+  if(g.allowance.mode==="pct"){
+    const lab = el("label","f",'<span>Allowance %</span><input type="number" id="ap" value="'+g.allowance.pct+'" min="1" max="100">');
+    b2.appendChild(lab);
+    $("#ap",lab).onchange = e=>{ g.allowance.pct = clamp(parseInt(e.target.value,10)||100,1,100); Store.save(); render(); };
+  }
+  b2.appendChild(el("div","tiny muted",
+    "Course Handicap = Index × (Slope ÷ 113) + (Rating − "+parTot()+"), rounded. "+
+    (g.allowance.mode==="low" ? "Then everyone drops by the lowest player's, so the best ball plays off scratch."
+     : g.allowance.mode==="pct" ? "Then scaled to "+g.allowance.pct+"%."
+     : "Used in full.")));
+  c2.appendChild(b2); m.appendChild(c2);
+
+  const c3 = el("div","card");
+  c3.appendChild(el("div","hd","<h3>Skins &amp; side bets</h3>"));
+  const b3 = el("div","bd");
+  const mkSeg = (label, obj, key)=>{
+    b3.appendChild(el("div","tiny",'<b>'+label+'</b>'));
+    const s = el("div","seg"); s.style.margin="5px 0 11px";
+    [["gross","Gross"],["net","Net"]].forEach(([k,l])=>{
+      const b = el("button", obj[key]===k?"on":"", l);
+      b.onclick = ()=>{ obj[key]=k; Store.save(); render(); };
+      s.appendChild(b);
+    });
+    b3.appendChild(s);
+  };
+  mkSeg("Skins scored", g.skins, "basis");
+  mkSeg("Side bets scored", g.betsCfg, "basis");
+  const g2 = el("div","grid2");
+  g2.innerHTML =
+    '<label class="f"><span>Default $/stroke</span><input type="number" id="ds" value="'+g.betsCfg.stake+'"></label>'+
+    '<label class="f"><span>Default cap</span><input type="number" id="dc" value="'+g.betsCfg.cap+'"></label>';
+  b3.appendChild(g2);
+  $("#ds",g2).onchange = e=>{ g.betsCfg.stake = Math.max(0,parseInt(e.target.value,10)||0); Store.save(); };
+  $("#dc",g2).onchange = e=>{ g.betsCfg.cap   = Math.max(0,parseInt(e.target.value,10)||0); Store.save(); };
+  b3.appendChild(el("div","tiny muted","Changing the defaults doesn't touch bets already booked — edit those individually."));
+  c3.appendChild(b3); m.appendChild(c3);
+
+  const c4 = el("div","card");
+  c4.appendChild(el("div","hd","<h3>Money</h3>"));
+  const b4 = el("div","bd");
+  const g3 = el("div","grid3");
+  g3.innerHTML =
+    '<label class="f"><span>Entry</span><input type="number" id="me" value="'+g.money.entry+'"></label>'+
+    '<label class="f"><span>To team</span><input type="number" id="mt" value="'+g.money.teamShare+'"></label>'+
+    '<label class="f"><span>To skins</span><input type="number" id="mk" value="'+g.money.skinsShare+'"></label>';
+  b4.appendChild(g3);
+  ["me","mt","mk"].forEach((id,i)=>{
+    $("#"+id,g3).onchange = e=>{
+      const v = Math.max(0,parseInt(e.target.value,10)||0);
+      if(i===0) g.money.entry=v; if(i===1) g.money.teamShare=v; if(i===2) g.money.skinsShare=v;
+      Store.save(); render();
+    };
+  });
+  const split = g.money.teamShare + g.money.skinsShare;
+  if(split !== g.money.entry){
+    b4.appendChild(el("div","banner","Team + skins is "+money(split)+" but entry is "+money(g.money.entry)+
+      ". That's allowed (the rest is house/food), just make sure it's on purpose."));
+  }
+  const g4 = el("div","grid2");
+  g4.innerHTML =
+    '<label class="f"><span>1st place, each</span><input type="number" id="p1" value="'+(g.money.payouts[0]||0)+'"></label>'+
+    '<label class="f"><span>2nd place, each</span><input type="number" id="p2" value="'+(g.money.payouts[1]||0)+'"></label>';
+  b4.appendChild(g4);
+  $("#p1",g4).onchange = e=>{ g.money.payouts[0]=Math.max(0,parseInt(e.target.value,10)||0); Store.save(); render(); };
+  $("#p2",g4).onchange = e=>{ g.money.payouts[1]=Math.max(0,parseInt(e.target.value,10)||0); Store.save(); render(); };
+  b4.appendChild(el("div","tiny muted","Ties share a place — two groups tied for 2nd both get the 2nd-place rate, exactly like the spreadsheet."));
+  c4.appendChild(b4); m.appendChild(c4);
+}
+
+/* ---------------- sheets / identity ---------------- */
+let sheetEl = null;
+function sheet(title, build){
+  closeSheet();
+  const s = el("div","sheet");
+  const inner = el("div","inner");
+  s.appendChild(inner);
+  s.onclick = e=>{ if(e.target===s) closeSheet(); };
+  document.body.appendChild(s);
+  sheetEl = s;
+  build(inner);
+}
+function closeSheet(){ if(sheetEl){ sheetEl.remove(); sheetEl=null; } }
+
+function pickMe(after){
+  sheet("Who are you?", inner=>{
+    inner.appendChild(el("h2","","Who are you?"));
+    inner.appendChild(el("div","tiny muted","Used to claim a scorecard. Stored only on this phone."));
+    const grid = el("div","pickgrid"); grid.style.marginTop="11px";
+    inGame().forEach(pid=>{
+      const b = el("button","pick"+(Store.s.me===pid?" on":""), esc(pname(pid)));
+      b.onclick = ()=>{ Store.s.me = pid; Store.save(); closeSheet(); render(); if(after) after(); };
+      grid.appendChild(b);
+    });
+    inner.appendChild(grid);
+    const clr = el("button","btn ghost block","Not playing / clear");
+    clr.style.marginTop="11px";
+    clr.onclick = ()=>{ Store.s.me=null; Store.save(); closeSheet(); render(); };
+    inner.appendChild(clr);
+  });
+}
+
+function exportJSON(){
+  const blob = new Blob([JSON.stringify(Store.s,null,2)],{type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = (G().name||"club-game").replace(/\W+/g,"-").toLowerCase()+"-"+G().date+".json";
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+}
+
+/* ------------------------------------------------------------
+   FIREBASE SEAM
+   Drop a config in and this starts syncing. Until then it's a
+   no-op and the app is purely local — nothing else changes.
+   ------------------------------------------------------------ */
+const FIREBASE_CONFIG = null;   // <-- paste the config object here later
+const Sync = {
+  ready:false,
+  init(){ /* wired up when FIREBASE_CONFIG is set */ },
+  push(){ if(!this.ready) return; },
+  pull(){ if(!this.ready) return; }
+};
+
+/* ---------------- boot ---------------- */
+Store.load();
+Sync.init();
+render();
+window.CG = { Store, groupScore, skins, ledger, betResult, playingHcp, strokes, teamStandings,
+  genTeams, draftStats, splitSizes, evenSplit, balanceInfo, applyDraw, parseRosterCSV, normName };
+</script>
+</body>
+</html>
