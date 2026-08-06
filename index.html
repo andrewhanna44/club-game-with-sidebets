@@ -60,11 +60,15 @@ header .spacer{flex:1}
 .syncpill.err{color:#ffd7d0}
 .syncpill.err .led{background:#ff8a75}
 
+/* :empty — on the login screen the nav has no buttons, and an empty fixed bar
+   with a border reads as a stray strip floating at the bottom of the page. */
 nav{
   position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;
   background:#fff;border-top:1px solid var(--line);
   padding-bottom:var(--pad);
 }
+nav:empty{display:none}
+body.noNav{padding-bottom:24px}
 nav button{
   flex:1;border:0;background:none;padding:9px 2px 8px;
   display:flex;flex-direction:column;align-items:center;gap:3px;
@@ -145,10 +149,17 @@ tr:last-child td{border-bottom:0}
 .prow:last-child{border-bottom:0}
 .prow .nm{font-weight:600;font-size:14px}
 .prow .hc{font-size:11.5px;color:var(--mute)}
-.stepper{display:flex;align-items:center;gap:0;flex:none;border:1px solid var(--line);border-radius:10px;overflow:hidden}
-.stepper button{width:36px;height:38px;border:0;background:#fff;font-size:18px;line-height:1;color:var(--brand2)}
-.stepper button:active{background:#e9eff7}
-.stepper .v{width:44px;height:38px;border:0;border-left:1px solid var(--line);border-right:1px solid var(--line);text-align:center;font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;background:#fff;border-radius:0;padding:0}
+.teetag{font-weight:500;font-size:12px;color:var(--mute)}
+.scorebox{
+  width:62px;height:48px;flex:none;padding:0;text-align:center;
+  font-size:21px;font-weight:700;font-variant-numeric:tabular-nums;
+  border:1.5px solid var(--line);border-radius:11px;background:#fff;
+  -moz-appearance:textfield
+}
+.scorebox::-webkit-outer-spin-button,.scorebox::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.scorebox:focus{border-color:var(--brand3);outline:2px solid rgba(45,96,152,.25);outline-offset:0}
+.scorebox:disabled{background:#f4f6f9;color:var(--mute)}
+.scorebox::placeholder{color:#c2cad6;font-weight:500}
 .dot{position:relative}
 .dot::after{content:"";position:absolute;top:4px;right:4px;width:5px;height:5px;border-radius:50%;background:var(--red)}
 .dot.d2::after{box-shadow:-7px 0 0 var(--red)}
@@ -181,8 +192,29 @@ tr:last-child td{border-bottom:0}
 .vs{font-size:10px;font-weight:700;color:var(--mute);letter-spacing:.08em;padding:1px 0}
 
 .sheet{position:fixed;inset:0;z-index:100;background:rgba(10,20,14,.42);display:flex;align-items:flex-end;justify-content:center}
-.sheet .inner{background:var(--bg);width:100%;max-width:560px;max-height:92vh;overflow-y:auto;border-radius:16px 16px 0 0;padding:16px 14px calc(20px + var(--pad))}
-.sheet h2{font-size:17px;margin-bottom:13px}
+.sheet .inner{background:var(--bg);width:100%;max-width:560px;max-height:92vh;display:flex;flex-direction:column;border-radius:16px 16px 0 0;overflow:hidden}
+.sheethd{display:flex;align-items:center;gap:10px;padding:14px 14px 10px;border-bottom:1px solid var(--line);background:var(--bg);flex:none}
+.sheethd h2{font-size:17px;flex:1;margin:0}
+.sheetx{
+  flex:none;width:34px;height:34px;border:0;border-radius:50%;
+  background:#e2e7ef;color:var(--ink);font-size:22px;line-height:1;
+  display:flex;align-items:center;justify-content:center;font-weight:500
+}
+.sheetx:active{background:#d2d9e4}
+.sheetbody{overflow-y:auto;padding:14px 14px calc(20px + var(--pad));-webkit-overflow-scrolling:touch}
+.sheet h2{font-size:17px}
+.sidecard{background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px 12px;margin-bottom:11px}
+.sidettl{font-size:13px;font-weight:700;color:var(--brand)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0}
+.chips:empty{display:none}
+.chip{
+  display:inline-flex;align-items:center;gap:7px;
+  background:#eaf1fa;color:var(--brand);border:1px solid #cddcee;
+  border-radius:99px;padding:6px 10px 6px 12px;font-size:13.5px;font-weight:600
+}
+.chip b{font-weight:600;font-size:16px;color:var(--mute);line-height:1}
+.chip:active{background:#dbe7f5}
+.addsel{margin-top:9px;background:#fff;color:var(--brand2);font-weight:600}
 .pickgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
 .pick{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 10px;text-align:left;font-size:13.5px;font-weight:600}
 .pick.on{border-color:var(--brand3);background:#eaf1fa;color:var(--brand)}
@@ -871,7 +903,12 @@ function renderHeader(){
 }
 
 function render(){
-  if(!Store.s.session.role){ renderHeader(); $("#nav").innerHTML=""; viewLogin($("#main")); return; }
+  if(!Store.s.session.role){
+    renderHeader(); $("#nav").innerHTML="";
+    document.body.classList.add("noNav");
+    viewLogin($("#main")); return;
+  }
+  document.body.classList.remove("noNav");
   renderHeader(); renderNav();
   if(view==="setup" && Store.s.session.role!=="admin"){ view="game"; sub=null; }
   const m = $("#main"); m.innerHTML = "";
@@ -1034,15 +1071,36 @@ function viewCard(m, gid){
   if(cardMode==="full"){ fullCard(m,g); }
   else { holeCard(m,g,canEdit); }
 
-  const gs = groupScore(g);
-  const tot = el("div","card");
-  tot.appendChild(el("div","bd",
-    "<div class='row'><span>Team score</span><span class='right score "+cls(gs.total)+"'>"+
-    (gs.thru? signed(gs.total):"–")+"</span></div>"+
-    "<div class='tiny muted' style='margin-top:4px'>"+
-    (gs.thru? "Through "+gs.thru+" holes · best "+G().team.balls+" net"+(G().team.allBirdies?", every net birdie counts":"") : "No holes posted")+
-    "</div>"));
+  const tot = el("div","card"); tot.id = "teamtot";
   m.appendChild(tot);
+  refreshTeamTotal(g);
+
+  if(isAdmin){
+    const rst = el("button","btn ghost block","Reset this match");
+    rst.style.cssText = "color:var(--red);margin-top:2px";
+    rst.onclick = ()=>{
+      if(!confirm("Wipe every score for the "+g.teeTime+" group? The players and bets stay.")) return;
+      g.pids.forEach(pid=>{ Store.s.scores[pid] = new Array(H).fill(null); });
+      g.scorer = null;
+      Store.save(); render();
+    };
+    m.appendChild(rst);
+  }
+}
+
+/* Team score recalculates as soon as scores land, without leaving the hole. */
+function refreshTeamTotal(g){
+  const t = document.getElementById("teamtot"); if(!t) return;
+  const gs = groupScore(g);
+  const cfg = G().team;
+  t.innerHTML =
+    "<div class='bd'><div class='row'><span>Team score</span>"+
+    "<span class='right score "+cls(gs.total)+"'>"+(gs.thru? signed(gs.total):"–")+"</span></div>"+
+    "<div class='tiny muted' style='margin-top:4px'>"+
+    (gs.thru
+      ? "Through "+gs.thru+" hole"+(gs.thru===1?"":"s")+" · best "+cfg.balls+" net"+(cfg.allBirdies?", every net birdie counts":"")
+      : "No holes posted")+
+    "</div></div>";
 }
 
 function holeCard(m,g,canEdit){
@@ -1055,51 +1113,84 @@ function holeCard(m,g,canEdit){
   bar.innerHTML =
     '<button id="prev">‹</button>'+
     '<div class="grow" style="text-align:center">'+
-      '<div class="h">'+(h+1)+'</div>'+
+      '<div class="h">Hole '+(h+1)+'</div>'+
       '<div class="meta">Par '+par(h)+' · Stroke '+c.siSets.menA[h]+(yd?" · "+yd:"")+'</div>'+
     '</div>'+
     '<button id="next">›</button>';
   m.appendChild(bar);
   $("#prev",bar).disabled = h===0;
   $("#next",bar).disabled = h===H-1;
-  $("#prev",bar).onclick = ()=>{ holeIdx--; render(); };
-  $("#next",bar).onclick = ()=>{ holeIdx++; render(); };
+  $("#prev",bar).onclick = ()=>{ holeIdx--; render(); window.scrollTo(0,0); };
+  $("#next",bar).onclick = ()=>{ holeIdx++; render(); window.scrollTo(0,0); };
 
   const card = el("div","card"); const bd = el("div","bd flush");
-  g.pids.forEach(pid=>{
+  const boxes = [];
+  g.pids.forEach((pid, i)=>{
     const st = strokes(pid,h);
     const row = el("div","prow");
     const ph = playingHcp(pid);
+    const tee = teeOf(pid);
     row.innerHTML =
       '<div class="grow">'+
-        '<div class="nm">'+esc(pname(pid))+'</div>'+
-        '<div class="hc">'+(teeOf(pid)?teeOf(pid).name:"—")+
-          (ph!=null? " · plays "+(ph>0?"+":"")+ph : " · no index")+
-          (st>0? " · "+st+" stroke"+(st>1?"s":"")+" here":"")+'</div>'+
+        '<div class="nm">'+esc(pname(pid))+' <span class="teetag">('+esc(tee?tee.name:"no tee")+')</span></div>'+
+        '<div class="hc">'+
+          (ph!=null? "plays "+(ph>0?"+":"")+ph : "no index")+
+          (st>0? " · "+st+" stroke"+(st>1?"s":"")+" here" : (st<0? " · gives "+(-st)+" back here" : ""))+'</div>'+
       '</div>';
-    const stp = el("div","stepper"+(st>0?" dot":"")+(st>1?" d2":""));
-    const minus = el("button","","−"), plus = el("button","","+");
-    const inp = el("input","v"); inp.type="number"; inp.inputMode="numeric";
+    const inp = el("input","scorebox"+(st>0?" dot":"")+(st>1?" d2":""));
+    inp.type="number"; inp.inputMode="numeric"; inp.pattern="[0-9]*";
+    inp.min="1"; inp.max="20"; inp.placeholder="–";
     inp.value = gross(pid,h)==null ? "" : gross(pid,h);
-    inp.disabled = !canEdit; minus.disabled = !canEdit; plus.disabled = !canEdit;
-    const set = v=>{
+    inp.disabled = !canEdit;
+    boxes.push(inp);
+
+    let advanceTimer = null;
+    const commit = ()=>{
       const a = Store.s.scores[pid];
-      a[h] = (v===""||v==null||isNaN(v)) ? null : clamp(Math.round(v),1,20);
+      const raw = inp.value.trim();
+      a[h] = raw==="" ? null : clamp(parseInt(raw,10)||0, 1, 20);
       Store.save();
-      inp.value = a[h]==null ? "" : a[h];
       refreshHoleFoot(g);
+      refreshTeamTotal(g);
     };
-    minus.onclick = ()=> set((gross(pid,h) ?? par(h)+1) - 1);
-    plus.onclick  = ()=> set((gross(pid,h) ?? par(h)-1) + 1);
-    inp.oninput   = ()=> { const a=Store.s.scores[pid]; a[h] = inp.value===""?null:clamp(parseInt(inp.value,10)||0,1,20); Store.save(); refreshHoleFoot(g); };
-    stp.append(minus, inp, plus);
-    row.appendChild(stp);
+    const advance = ()=>{
+      const next = boxes[i+1];
+      if(next && !next.disabled){ next.focus(); next.select(); }
+      else inp.blur();
+    };
+    inp.oninput = ()=>{
+      if(inp.value.length > 2) inp.value = inp.value.slice(0,2);
+      commit();
+      clearTimeout(advanceTimer);
+      const v = inp.value;
+      // Two digits is unambiguous — move on. A lone "1" might still become
+      // 10/11/12, so give it a beat before jumping to the next player.
+      if(v.length >= 2) advance();
+      else if(v.length === 1) advanceTimer = setTimeout(advance, v === "1" ? 900 : 450);
+    };
+    inp.onkeydown = e=>{ if(e.key === "Enter"){ clearTimeout(advanceTimer); commit(); advance(); } };
+    inp.onblur = ()=>{ clearTimeout(advanceTimer); commit(); };
+    inp.onfocus = ()=> inp.select();
+
+    row.appendChild(inp);
     bd.appendChild(row);
   });
   card.appendChild(bd); m.appendChild(card);
 
   const foot = el("div","card"); foot.id="holefoot";
   m.appendChild(foot); refreshHoleFoot(g);
+
+  if(canEdit){
+    const go = el("button","btn block", h < H-1 ? "Save scores & go to hole "+(h+2) : "Save scores & finish");
+    go.style.marginTop="2px";
+    go.onclick = ()=>{
+      boxes.forEach(b=> b.blur());
+      Store.save();
+      if(h < H-1){ holeIdx++; render(); window.scrollTo(0,0); }
+      else { cardMode = "full"; render(); window.scrollTo(0,0); }
+    };
+    m.appendChild(go);
+  }
 }
 
 function refreshHoleFoot(g){
@@ -1108,9 +1199,13 @@ function refreshHoleFoot(g){
   const nets = g.pids.map(pid=>net(pid,h)).filter(v=>v!=null).sort((a,b)=>a-b);
   const gs = groupScore(g);
   const hole = gs.perHole[h];
+  const posted = g.pids.filter(pid=>gross(pid,h)!=null).length;
   f.innerHTML = "<div class='bd'><div class='row'><span class='tiny muted'>This hole</span>"+
     "<span class='right mono' style='font-weight:700'>"+(hole==null?"–":signed(hole))+"</span></div>"+
-    (nets.length? "<div class='tiny muted' style='margin-top:4px'>Net balls: "+nets.join(", ")+" · par "+p+"</div>":"")+
+    (nets.length
+      ? "<div class='tiny muted' style='margin-top:4px'>Net balls: "+nets.join(", ")+" · par "+p+
+        (posted < g.pids.length ? " · "+posted+" of "+g.pids.length+" in" : "")+"</div>"
+      : "")+
     "</div>";
 }
 
@@ -1131,10 +1226,18 @@ function fullCard(m,g){
   pr += "<td>"+sum(c.par.slice(0,9))+"</td>";
   for(let h=9;h<18;h++) pr += "<td>"+c.par[h]+"</td>";
   pr += "<td>"+sum(c.par.slice(9))+"</td><td>"+parTot()+"</td></tr>";
+  // Men's stroke index, straight off the card — which hole gets a stroke first.
+  pr += "<tr class='par'><td>Hcp</td>";
+  for(let h=0;h<9;h++) pr += "<td>"+c.siSets.menA[h]+"</td>";
+  pr += "<td></td>";
+  for(let h=9;h<18;h++) pr += "<td>"+c.siSets.menA[h]+"</td>";
+  pr += "<td></td><td></td></tr>";
   tb.innerHTML = pr;
 
   g.pids.forEach(pid=>{
-    let r = "<tr><td>"+esc(pname(pid))+"</td>";
+    const tee = teeOf(pid);
+    let r = "<tr><td>"+esc(pname(pid))+
+      " <span class='teetag'>("+esc(tee?tee.name:"—")+")</span></td>";
     const cell = h=>{
       const v = gross(pid,h);
       if(v==null) return "<td class='muted'>·</td>";
@@ -1151,7 +1254,9 @@ function fullCard(m,g){
   });
   t.appendChild(tb); bd.appendChild(t); wrap.appendChild(bd); m.appendChild(wrap);
   m.appendChild(el("div","tiny muted",
-    "Red dot = a stroke is given on that hole. Tap “Hole” above to enter scores."));
+    "<b>Hcp</b> is the men's stroke index for this course — hole 1 on that row is where the first stroke falls. "+
+    "A red dot marks a hole where that player gets a stroke. Tees are shown next to each name and follow whatever "+
+    "tee they're set to in Setup → Today's field. Tap “Hole” above to enter scores."));
 }
 
 /* ---------------- SIDE BETS ---------------- */
@@ -1291,29 +1396,50 @@ function betSheet(bet){
   sheet(isNew?"Book a bet":"Edit bet", inner=>{
     const rebuild = ()=>{
       inner.innerHTML = "";
-      inner.appendChild(el("h2","",isNew?"Book a bet":"Edit bet"));
-      ["a","b"].forEach((key,idx)=>{
-        const w = el("div"); w.style.marginBottom="13px";
-        w.appendChild(el("div","tiny",'<b>Side '+(idx?"B":"A")+'</b> <span class="muted">— tap 1 or 2 players</span>'));
-        const grid = el("div","pickgrid"); grid.style.marginTop="6px";
-        inGame().forEach(pid=>{
-          const on = draft[key].includes(pid);
-          const b = el("button","pick"+(on?" on":""),
-            esc(pname(pid))+'<span class="s">'+(teeOf(pid)?teeOf(pid).name:"")+'</span>');
-          b.onclick = ()=>{
-            const arr = draft[key], i = arr.indexOf(pid);
-            if(i>=0) arr.splice(i,1);
-            else{
-              if(arr.length>=2) arr.shift();
-              const o = key==="a"?"b":"a", j = draft[o].indexOf(pid);
-              if(j>=0) draft[o].splice(j,1);
-              arr.push(pid);
-            }
+
+      /* One card per side. Chosen players show as removable chips; everyone
+         else stays behind a native dropdown, which on a phone opens the OS
+         scroll picker instead of papering the screen with 24 buttons. */
+      [["a","Side 1"],["b","Side 2"]].forEach(([key,label])=>{
+        const card = el("div","sidecard");
+        const hd = el("div","row");
+        hd.appendChild(el("div","sidettl", label));
+        const n = draft[key].length;
+        hd.appendChild(el("span","tiny muted right", n? (n===2?"better ball":"single") : "nobody yet"));
+        card.appendChild(hd);
+
+        const chips = el("div","chips");
+        draft[key].forEach(pid=>{
+          const chip = el("span","chip", esc(pname(pid))+"<b>×</b>");
+          chip.onclick = ()=>{
+            draft[key] = draft[key].filter(x=>x!==pid);
             rebuild();
           };
-          grid.appendChild(b);
+          chips.appendChild(chip);
         });
-        w.appendChild(grid); inner.appendChild(w);
+        card.appendChild(chips);
+
+        if(draft[key].length < 2){
+          const taken = new Set([...draft.a, ...draft.b]);
+          const sel = el("select","addsel");
+          sel.appendChild(el("option","","+ Add player"));
+          sel.firstChild.value = "";
+          inGame()
+            .filter(pid=>!taken.has(pid))
+            .sort((x,y)=> pname(x).localeCompare(pname(y)))
+            .forEach(pid=>{
+              const o = el("option","", esc(pname(pid)) + (teeOf(pid)? " — "+esc(teeOf(pid).name) : ""));
+              o.value = pid;
+              sel.appendChild(o);
+            });
+          sel.onchange = ()=>{
+            if(!sel.value) return;
+            draft[key].push(sel.value);
+            rebuild();
+          };
+          card.appendChild(sel);
+        }
+        inner.appendChild(card);
       });
 
       const g2 = el("div","grid2");
@@ -1335,6 +1461,7 @@ function betSheet(bet){
       const row = el("div","row"); row.style.marginTop="6px";
       const save = el("button","btn grow", isNew?"Book it":"Save");
       save.disabled = !draft.a.length || !draft.b.length;
+      if(save.disabled) inner.appendChild(el("div","tiny muted","Add at least one player to each side."));
       save.onclick = ()=>{
         if(isNew) Store.s.bets.push(draft);
         else Object.assign(bet, draft);
@@ -1489,19 +1616,45 @@ function viewSetup(m){
   const db = el("div","bd");
   const ex = el("button","btn ghost block","Export game as JSON");
   ex.onclick = exportJSON; ex.style.marginBottom="8px";
-  const cl = el("button","btn ghost block","Clear all scores");
+  // Reset one group's card. Everything else in the game is untouched.
+  const rm = el("button","btn ghost block","Reset a single match…");
+  rm.style.marginBottom="8px";
+  rm.onclick = ()=>{
+    sheet("Reset a single match", body=>{
+      body.appendChild(el("div","tiny muted","Wipes that group's scores and releases their scorecard. Bets, players and every other group stay exactly as they are."));
+      G().groups.slice()
+        .sort((a,b)=> (parseTeeTime(a.teeTime) ?? 0) - (parseTeeTime(b.teeTime) ?? 0))
+        .forEach(g=>{
+        const posted = g.pids.reduce((n,pid)=> n + Store.s.scores[pid].filter(v=>v!=null).length, 0);
+        const b = el("button","btn ghost block");
+        b.style.marginTop="8px";
+        b.innerHTML = "<b>"+esc(g.teeTime)+"</b> — "+posted+" score"+(posted===1?"":"s")+" posted";
+        b.onclick = ()=>{
+          if(!confirm("Wipe every score for the "+g.teeTime+" group?")) return;
+          g.pids.forEach(pid=>{ Store.s.scores[pid] = new Array(H).fill(null); });
+          g.scorer = null;
+          Store.save(); closeSheet(); render();
+        };
+        body.appendChild(b);
+      });
+    });
+  };
+
+  const cl = el("button","btn ghost block","Reset all matches");
   cl.style.marginBottom="8px";
   cl.onclick = ()=>{
-    if(!confirm("Erase every score in this game? Bets, groups and players stay.")) return;
+    if(!confirm("Wipe every score in every group? Bets, groups and players stay — only the scoring is cleared.")) return;
     Object.keys(Store.s.scores).forEach(k=> Store.s.scores[k] = new Array(H).fill(null));
+    G().groups.forEach(g=> g.scorer = null);
     Store.save(); render();
   };
-  const rs = el("button","btn danger block","Reset to the seeded Sunday game");
+
+  const rs = el("button","btn danger block","Reset everything to the starting template");
   rs.onclick = ()=>{
-    if(!confirm("Throw away everything and reload the 26 Jul 2026 seed?")) return;
+    if(!confirm("Throw away the whole game — players, groups, bets and scores — and reload the starting template?")) return;
     Store.reset(); sub=null; render();
   };
-  db.append(ex,cl,rs);
+  db.append(ex,rm,cl,rs);
   d.appendChild(db); m.appendChild(d);
 
   m.appendChild(el("div","tiny muted","Build "+BUILD+" · "+
@@ -1548,7 +1701,6 @@ function playerSheet(p){
   const d = p ? Object.assign({},p) : { id:uid("p"), name:"", index:null, sex:"M", email:"", homeTee:"blue", notes:"" };
   sheet(isNew?"New player":"Edit player", inner=>{
     inner.innerHTML =
-      '<h2>'+(isNew?"New player":"Edit player")+'</h2>'+
       '<label class="f"><span>Name</span><input type="text" id="pn" value="'+esc(d.name)+'" placeholder="First Last"></label>'+
       '<div class="grid2">'+
         '<label class="f"><span>Handicap index</span><input type="number" id="pi" step="0.1" value="'+(d.index==null?"":d.index)+'" placeholder="e.g. 8.4"></label>'+
@@ -2183,15 +2335,25 @@ function setupRules(m){
 
 /* ---------------- sheets / identity ---------------- */
 let sheetEl = null;
+/* The title bar and its X live outside the body element, so a caller that
+   redraws its own contents can't accidentally wipe the only way out. */
 function sheet(title, build){
   closeSheet();
   const s = el("div","sheet");
   const inner = el("div","inner");
+  const hd = el("div","sheethd");
+  hd.appendChild(el("h2","", esc(title)));
+  const x = el("button","sheetx","×");
+  x.setAttribute("aria-label","Close");
+  x.onclick = closeSheet;
+  hd.appendChild(x);
+  const body = el("div","sheetbody");
+  inner.append(hd, body);
   s.appendChild(inner);
   s.onclick = e=>{ if(e.target===s) closeSheet(); };
   document.body.appendChild(s);
   sheetEl = s;
-  build(inner);
+  build(body);
 }
 function closeSheet(){ if(sheetEl){ sheetEl.remove(); sheetEl=null; } }
 
