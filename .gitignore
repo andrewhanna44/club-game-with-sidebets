@@ -1,8 +1,6 @@
-# Whitelist: only the app itself goes to this PUBLIC repo.
-# Source spreadsheet, the club's email, the decision log, and local
-# tooling stay on this machine only.
 *
 !.gitignore
+!.nojekyll
 !index.html
 !database.rules.json
 !site.webmanifest
