@@ -2138,6 +2138,29 @@ const Sync = {
 
   now(){ return Date.now() + this._offset; },
 
+  /* ----------------------------------------------------------------
+     Keeping the diff baseline honest.
+     _prev is "what we believe the server already has". When a change
+     arrives FROM the server we must update _prev too — otherwise a
+     later local edit back to _prev's stale value looks like "no
+     change" and never gets pushed. That silently broke clearing a
+     score another device had entered.
+     ---------------------------------------------------------------- */
+  notePrevScore(pid, h){
+    if(!this._prev) return;
+    (this._prev.scores[pid] = this._prev.scores[pid] || [])[h] = Store.s.scores[pid][h];
+  },
+  notePrevRecord(coll, id, item){
+    if(!this._prev) return;
+    const map = this._prev[coll] || (this._prev[coll] = {});
+    if(item === null) delete map[id];
+    else map[id] = JSON.stringify(item);
+  },
+  notePrevSingleton(key, value){
+    if(!this._prev) return;
+    this._prev[key] = JSON.stringify(value);
+  },
+
   write(path, val){
     if(!this.ready) return;
     const p = this._fns.set(this._fns.ref(this.db, path), val);
@@ -2279,6 +2302,7 @@ const Sync = {
             if(rec.t > localT){
               Store.s.scores[pid][h] = rec.v==null ? null : rec.v;
               (Store.s.meta.scores[pid] = Store.s.meta.scores[pid]||{})[h] = rec.t;
+              this.notePrevScore(pid, h);
               changed = true;
             }
           });
@@ -2296,6 +2320,8 @@ const Sync = {
               const clean = Object.assign({}, rec); delete clean.t;
               if(mergeRemoteRecord(coll, id, clean)) changed = true;
               Store.s.meta[coll][id] = rec.t;
+              const listNow = coll==="players" ? Store.s.players : coll==="groups" ? G().groups : Store.s.bets;
+              this.notePrevRecord(coll, id, listNow.find(x=>x.id===id) || null);
             }
           });
           const list = coll==="players" ? Store.s.players : coll==="groups" ? G().groups : Store.s.bets;
@@ -2303,6 +2329,7 @@ const Sync = {
             if(!(item.id in all) && Store.s.meta[coll][item.id]){
               removeRemoteRecord(coll, item.id);
               delete Store.s.meta[coll][item.id];
+              this.notePrevRecord(coll, item.id, null);
               changed = true;
             }
           });
@@ -2319,12 +2346,15 @@ const Sync = {
             const clean = Object.assign({}, rec); delete clean.t;
             G().entrants[pid] = clean;
             Store.s.meta.entrants[pid] = rec.t;
+            this.notePrevRecord("entrants", pid, clean);
             changed = true;
           }
         });
         Object.keys(G().entrants).forEach(pid=>{
           if(!(pid in all) && Store.s.meta.entrants[pid]){
-            delete G().entrants[pid]; delete Store.s.meta.entrants[pid]; changed = true;
+            delete G().entrants[pid]; delete Store.s.meta.entrants[pid];
+            this.notePrevRecord("entrants", pid, null);
+            changed = true;
           }
         });
         if(changed){ localStorage.setItem(KEY, JSON.stringify(Store.s)); render(); }
@@ -2335,6 +2365,7 @@ const Sync = {
         if(rec.t > (Store.s.meta.draw||0)){
           const clean = Object.assign({}, rec); delete clean.t;
           G().draw = clean; Store.s.meta.draw = rec.t;
+          this.notePrevSingleton("draw", G().draw);
           localStorage.setItem(KEY, JSON.stringify(Store.s)); render();
         }
       });
@@ -2344,6 +2375,7 @@ const Sync = {
         if(rec.t > (Store.s.meta.admin||0)){
           const clean = Object.assign({}, rec); delete clean.t;
           Store.s.admin = clean; Store.s.meta.admin = rec.t;
+          this.notePrevSingleton("admin", Store.s.admin);
           localStorage.setItem(KEY, JSON.stringify(Store.s)); render();
         }
       });
@@ -2353,6 +2385,8 @@ const Sync = {
         if(rec.t > (Store.s.meta.settings||0)){
           const clean = Object.assign({}, rec); delete clean.t;
           Object.assign(G(), clean); Store.s.meta.settings = rec.t;
+          const { entrants, groups, draw, ...rest } = G();
+          this.notePrevSingleton("settings", rest);
           localStorage.setItem(KEY, JSON.stringify(Store.s)); render();
         }
       });
