@@ -7,24 +7,35 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Club Game">
-<meta name="theme-color" content="#14432a">
+<meta name="theme-color" content="#12283f">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="manifest" href="site.webmanifest">
 <style>
 :root{
-  --green:#14432a; --green2:#1d5c39; --green3:#2a7a4d;
-  --cream:#f6f3ea; --card:#ffffff; --ink:#16211b; --mute:#6b7a70;
-  --line:#dfe4dc; --red:#b3261e; --gold:#b8892b; --blue:#2a5d9e;
+  --brand:#12283f; --brand2:#1d4470; --brand3:#2d6098;
+  --bg:#eef1f6; --card:#ffffff; --ink:#131c26; --mute:#66727f;
+  --line:#dde3ec; --red:#b3261e; --gold:#b8892b; --blue:#2a5d9e;
   --pos:#1a7f3c; --neg:#b3261e;
   --pad:env(safe-area-inset-bottom,0px);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{background:var(--bg)}
 html,body{margin:0;padding:0}
+/* Turf: subtle mown-fairway texture, navy-tinted so it sits under the
+   brand rather than fighting it. Cards stay solid white on top — the
+   texture never goes anywhere a number has to stay readable. */
 body{
   font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-  color:var(--ink); background:var(--cream);
+  color:var(--ink);
+  background-color:var(--bg);
+  background-image:
+    radial-gradient(circle at 18% 12%, rgba(24,58,96,.075) 0 38%, transparent 39%),
+    radial-gradient(circle at 82% 26%, rgba(24,58,96,.055) 0 32%, transparent 33%),
+    radial-gradient(circle at 46% 78%, rgba(24,58,96,.065) 0 42%, transparent 43%),
+    repeating-linear-gradient(115deg, rgba(24,58,96,.038) 0 22px, transparent 22px 46px);
+  background-attachment:fixed;
   padding-bottom:calc(64px + var(--pad));
   -webkit-text-size-adjust:100%;
 }
@@ -34,7 +45,7 @@ input,select{font:inherit;color:inherit}
 
 /* ---------- chrome ---------- */
 header{
-  position:sticky;top:0;z-index:40;background:var(--green);color:#fff;
+  position:sticky;top:0;z-index:40;background:var(--brand);color:#fff;
   padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;
   display:flex;align-items:center;gap:10px;
 }
@@ -60,7 +71,7 @@ nav button{
   font-size:10.5px;font-weight:600;color:var(--mute);letter-spacing:.01em;
 }
 nav button svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
-nav button.on{color:var(--green2)}
+nav button.on{color:var(--brand2)}
 
 main{padding:14px 12px 22px;max-width:760px;margin:0 auto}
 
@@ -79,10 +90,10 @@ main{padding:14px 12px 22px;max-width:760px;margin:0 auto}
 .right{margin-left:auto}
 .trunc{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-.btn{background:var(--green2);color:#fff;border:0;border-radius:10px;padding:10px 15px;font-weight:600;font-size:14px}
-.btn:active{background:var(--green)}
-.btn.ghost{background:#fff;color:var(--green2);border:1px solid var(--line)}
-.btn.ghost:active{background:#eef3ee}
+.btn{background:var(--brand2);color:#fff;border:0;border-radius:10px;padding:10px 15px;font-weight:600;font-size:14px}
+.btn:active{background:var(--brand)}
+.btn.ghost{background:#fff;color:var(--brand2);border:1px solid var(--line)}
+.btn.ghost:active{background:#e9eff7}
 .btn.sm{padding:7px 11px;font-size:13px;border-radius:9px}
 .btn.danger{background:var(--red)}
 .btn:disabled{opacity:.4}
@@ -93,11 +104,11 @@ label.f>span{display:block;font-size:11.5px;font-weight:650;text-transform:upper
 input[type=text],input[type=number],input[type=time],input[type=date],input[type=email],select,textarea{
   width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:#fff
 }
-input:focus,select:focus,textarea:focus{outline:2px solid var(--green3);outline-offset:-1px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--brand3);outline-offset:-1px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 10px}
 
-.pill{display:inline-block;padding:2px 7px;border-radius:99px;font-size:11px;font-weight:650;background:#eef3ee;color:var(--green2)}
+.pill{display:inline-block;padding:2px 7px;border-radius:99px;font-size:11px;font-weight:650;background:#e9eff7;color:var(--brand2)}
 .pill.warn{background:#fdf1dc;color:#8a5d09}
 .pill.grey{background:#eee;color:var(--mute)}
 .pill.red{background:#fbe9e7;color:var(--red)}
@@ -118,13 +129,13 @@ tr:last-child td{border-bottom:0}
 
 .lrow{display:flex;align-items:center;gap:11px;padding:11px 13px;border-bottom:1px solid var(--line);width:100%;background:none;border-left:0;border-right:0;border-top:0;text-align:left}
 .lrow:last-child{border-bottom:0}
-.lrow:active{background:#f4f7f4}
+.lrow:active{background:#f1f4f9}
 .rank{width:24px;text-align:center;font-weight:700;color:var(--mute);font-size:13px;flex:none}
 .chev{width:8px;height:8px;border-right:2px solid #c3ccc5;border-bottom:2px solid #c3ccc5;transform:rotate(-45deg);flex:none;margin-right:2px}
 .score{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;flex:none}
 
 /* ---------- scorecard entry ---------- */
-.holebar{display:flex;align-items:center;gap:10px;background:var(--green);color:#fff;border-radius:12px;padding:11px 13px;margin-bottom:11px}
+.holebar{display:flex;align-items:center;gap:10px;background:var(--brand);color:#fff;border-radius:12px;padding:11px 13px;margin-bottom:11px}
 .holebar .h{font-size:24px;font-weight:750;line-height:1}
 .holebar .meta{font-size:11.5px;opacity:.78;line-height:1.35}
 .holebar button{background:rgba(255,255,255,.16);border:0;color:#fff;width:38px;height:38px;border-radius:10px;font-size:19px;line-height:1;flex:none}
@@ -135,8 +146,8 @@ tr:last-child td{border-bottom:0}
 .prow .nm{font-weight:600;font-size:14px}
 .prow .hc{font-size:11.5px;color:var(--mute)}
 .stepper{display:flex;align-items:center;gap:0;flex:none;border:1px solid var(--line);border-radius:10px;overflow:hidden}
-.stepper button{width:36px;height:38px;border:0;background:#fff;font-size:18px;line-height:1;color:var(--green2)}
-.stepper button:active{background:#eef3ee}
+.stepper button{width:36px;height:38px;border:0;background:#fff;font-size:18px;line-height:1;color:var(--brand2)}
+.stepper button:active{background:#e9eff7}
 .stepper .v{width:44px;height:38px;border:0;border-left:1px solid var(--line);border-right:1px solid var(--line);text-align:center;font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;background:#fff;border-radius:0;padding:0}
 .dot{position:relative}
 .dot::after{content:"";position:absolute;top:4px;right:4px;width:5px;height:5px;border-radius:50%;background:var(--red)}
@@ -144,15 +155,25 @@ tr:last-child td{border-bottom:0}
 
 .cardtbl td,.cardtbl th{padding:6px 5px;font-size:12px;text-align:center}
 .cardtbl th:first-child,.cardtbl td:first-child{text-align:left;position:sticky;left:0;background:#fff;z-index:1;min-width:96px;padding-left:11px}
-.cardtbl thead th{background:#f4f7f4}
-.cardtbl .par td{background:#f7f9f7;color:var(--mute);font-size:11px}
-.cardtbl .tot{font-weight:700;background:#f4f7f4}
+.cardtbl thead th{background:#f1f4f9}
+.cardtbl .par td{background:#f6f8fb;color:var(--mute);font-size:11px}
+.cardtbl .tot{font-weight:700;background:#f1f4f9}
 .u{color:var(--red);font-weight:700}
 .o{color:var(--mute)}
 
-.betrow{padding:11px 13px;border-bottom:1px solid var(--line)}
-.betrow:last-child{border-bottom:0}
+/* swipe-to-reject: the red action sits underneath, the content slides over it */
+.betwrap{position:relative;overflow:hidden;border-bottom:1px solid var(--line)}
+.betwrap:last-child{border-bottom:0}
+.betact{
+  position:absolute;top:0;right:0;bottom:0;width:118px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--red);color:#fff;font-size:13px;font-weight:700;text-align:center;line-height:1.2
+}
+.betact.restore{background:var(--brand2)}
+.betrow{padding:11px 13px;background:var(--card);position:relative;touch-action:pan-y}
 .betrow.void{opacity:.45}
+.betrow.sliding{transition:none}
+.betrow.snap{transition:transform .18s ease}
 .betside{display:flex;align-items:center;gap:8px;padding:3px 0}
 .betside .who{flex:1;font-size:13.5px;min-width:0}
 .betside .sc{font-variant-numeric:tabular-nums;font-weight:700;font-size:15px;width:32px;text-align:right}
@@ -160,21 +181,25 @@ tr:last-child td{border-bottom:0}
 .vs{font-size:10px;font-weight:700;color:var(--mute);letter-spacing:.08em;padding:1px 0}
 
 .sheet{position:fixed;inset:0;z-index:100;background:rgba(10,20,14,.42);display:flex;align-items:flex-end;justify-content:center}
-.sheet .inner{background:var(--cream);width:100%;max-width:560px;max-height:92vh;overflow-y:auto;border-radius:16px 16px 0 0;padding:16px 14px calc(20px + var(--pad))}
+.sheet .inner{background:var(--bg);width:100%;max-width:560px;max-height:92vh;overflow-y:auto;border-radius:16px 16px 0 0;padding:16px 14px calc(20px + var(--pad))}
 .sheet h2{font-size:17px;margin-bottom:13px}
 .pickgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
 .pick{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 10px;text-align:left;font-size:13.5px;font-weight:600}
-.pick.on{border-color:var(--green3);background:#eef7f0;color:var(--green)}
+.pick.on{border-color:var(--brand3);background:#eaf1fa;color:var(--brand)}
 .pick .s{display:block;font-size:11px;font-weight:500;color:var(--mute);margin-top:1px}
-.pick.on .s{color:var(--green3)}
+.pick.on .s{color:var(--brand3)}
 
 .seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
 .seg button{flex:1;border:0;background:none;padding:8px 4px;font-size:12.5px;font-weight:600;color:var(--mute)}
-.seg button.on{background:var(--green2);color:#fff}
+.seg button.on{background:var(--brand2);color:#fff}
 .setuplink{display:flex;align-items:center;gap:10px;padding:13px;border-bottom:1px solid var(--line);width:100%;background:none;border-left:0;border-right:0;border-top:0;text-align:left;font-size:14px;font-weight:600}
 .setuplink:last-child{border-bottom:0}
-.setuplink:active{background:#f4f7f4}
-.setuplink .d{font-size:12px;font-weight:400;color:var(--mute);margin-top:1px}
+.setuplink:active{background:#f1f4f9}
+/* display:block — without it the description runs straight into the title
+   ("Game codesStarted 8/5"), because flex collapses the gap between them. */
+.setuplink .d{display:block;font-size:12px;font-weight:400;color:var(--mute);margin-top:2px;line-height:1.35}
+.setuphd{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--mute);margin:16px 4px 7px}
+.setuphd:first-child{margin-top:2px}
 </style>
 </head>
 <body>
@@ -195,7 +220,7 @@ tr:last-child td{border-bottom:0}
    Single file. localStorage now; Firebase seam at the bottom.
    ============================================================ */
 
-const BUILD = "2026-08-05.1";
+const BUILD = "2026-08-05.2";
 const H = 18;
 const KEY = "clubgame.v1";
 
@@ -253,86 +278,89 @@ const CROASDAILE = {
    Handicap indexes are unknown, so they're left null; the app
    degrades to gross scoring until they're filled in.
    ------------------------------------------------------------ */
+// [name, tee, handicap index]. Indexes span +3.0 (a scratch-beating "plus"
+// player, stored negative) up to 12.0, so the stroke maths gets exercised in
+// both directions — plus players give strokes back on the hardest holes.
 const SEED_ROSTER = [
-  ["Player 1","gold"],    ["Player 2","white"],  ["Player 3","gold"],   ["Player 4","bw"],
-  ["Player 5","gb"],        ["Player 6","gb"],     ["Player 7","blue"],     ["Player 8","gb"],
-  ["Player 9","blue"],    ["Player 10","gb"],    ["Player 11","gb"],        ["Player 12","bw"],
-  ["Player 13","gb"],        ["Player 14","gb"],      ["Player 15","gold"],   ["Player 16","gb"],
-  ["Player 17","gold"],  ["Player 18","gb"],   ["Player 19","blue"],    ["Player 20","blue"],
-  ["Player 21","blue"],    ["Player 22","blue"],   ["Player 23","gb"],      ["Player 24","gb"]
+  ["Andrew Hanna","gold",6.4],      ["Marcus Whitfield","white",-2.1], ["Danny Corrigan","gold",11.6], ["Sam Okafor","bw",3.8],
+  ["Peter Vance","gb",0.4],         ["Luis Ferrer","gb",9.2],          ["Grant Mulligan","blue",-0.7], ["Tomas Reyes","gb",7.5],
+  ["Eli Brennan","blue",2.3],       ["Wes Tanaka","gb",10.8],          ["Rory Feldman","gb",5.1],      ["Vic Salerno","bw",-3.0],
+  ["Hugh Lambert","gb",8.7],        ["Dev Ramaswamy","gb",1.6],        ["Cole Baxter","gold",12.0],    ["Owen Pruitt","gb",4.9],
+  ["Miles Ashford","gold",-1.4],    ["Jonah Kestler","gb",6.9],        ["Trey Donovan","blue",10.1],   ["Alec Winston","blue",2.8],
+  ["Gus Hartley","blue",7.2],       ["Neil Cavanaugh","blue",0.9],     ["Bo Sinclair","gb",11.3],      ["Rafe Underwood","gb",3.4]
 ];
 const SEED_GROUPS = [
-  ["7:00 AM", ["Player 3","Player 14","Player 22","Player 12"]],
-  ["7:10 AM", ["Player 8","Player 18","Player 11","Player 19"]],
-  ["7:20 AM", ["Player 6","Player 17","Player 13","Player 20"]],
-  ["7:30 AM", ["Player 1","Player 24","Player 16","Player 2"]],
-  ["7:40 AM", ["Player 21","Player 5","Player 7","Player 9"]],
-  ["7:50 AM", ["Player 15","Player 10","Player 23","Player 4"]]
+  ["7:00 AM", ["Danny Corrigan","Dev Ramaswamy","Neil Cavanaugh","Vic Salerno"]],
+  ["7:10 AM", ["Tomas Reyes","Jonah Kestler","Rory Feldman","Trey Donovan"]],
+  ["7:20 AM", ["Luis Ferrer","Miles Ashford","Hugh Lambert","Alec Winston"]],
+  ["7:30 AM", ["Andrew Hanna","Rafe Underwood","Owen Pruitt","Marcus Whitfield"]],
+  ["7:40 AM", ["Gus Hartley","Peter Vance","Grant Mulligan","Eli Brennan"]],
+  ["7:50 AM", ["Cole Baxter","Wes Tanaka","Bo Sinclair","Sam Okafor"]]
 ];
 // Bets as booked that Sunday. sideA vs sideB; rejected ones kept so the
 // screen matches the paper. Stake/cap default to the house $5 / $25.
 const SEED_BETS = [
-  [["Player 1","Player 24"],["Player 21","Player 5"],0],
-  [["Player 1","Player 24"],["Player 15","Player 10"],0],
-  [["Player 8","Player 11"],["Player 21","Player 7"],0],
-  [["Player 8","Player 18"],["Player 6","Player 17"],0],
-  [["Player 1","Player 24"],["Player 8","Player 18"],0],
-  [["Player 8","Player 18"],["Player 21","Player 5"],0],
-  [["Player 10"],["Player 8"],0],
-  [["Player 8","Player 11"],["Player 6","Player 13"],0],
-  [["Player 8"],["Player 6"],0],
-  [["Player 21"],["Player 8"],0],
-  [["Player 9","Player 21"],["Player 8","Player 19"],1],
-  [["Player 15","Player 4"],["Player 6","Player 20"],1],
-  [["Player 15","Player 4"],["Player 3","Player 12"],1],
-  [["Player 15","Player 23"],["Player 3","Player 22"],1],
-  [["Player 15","Player 23"],["Player 8","Player 11"],1],
-  [["Player 15","Player 10"],["Player 3","Player 14"],1],
-  [["Player 15"],["Player 3"],1],
-  [["Player 15"],["Player 1"],0],
-  [["Player 15"],["Player 6"],1],
-  [["Player 15"],["Player 21"],1],
-  [["Player 15","Player 23"],["Player 21","Player 7"],1],
-  [["Player 15","Player 3"],["Player 1","Player 6"],0],
-  [["Player 15","Player 10"],["Player 8","Player 18"],1],
-  [["Player 15","Player 10"],["Player 21","Player 5"],0],
-  [["Player 10"],["Player 17"],0],
-  [["Player 10"],["Player 6"],0],
-  [["Player 10","Player 23"],["Player 5","Player 7"],0],
-  [["Player 1","Player 16"],["Player 8","Player 11"],0],
-  [["Player 1","Player 16"],["Player 8","Player 18"],0],
-  [["Player 1","Player 16"],["Player 15","Player 23"],0],
-  [["Player 18","Player 11"],["Player 22","Player 12"],1],
-  [["Player 10","Player 4"],["Player 14","Player 12"],0],
-  [["Player 23","Player 4"],["Player 7","Player 9"],0],
-  [["Player 1","Player 18"],["Player 6","Player 17"],0],
-  [["Player 6","Player 5"],["Player 8","Player 11"],0],
-  [["Player 8","Player 17"],["Player 1","Player 16"],0],
-  [["Player 20","Player 6"],["Player 21","Player 9"],0],
-  [["Player 20","Player 17"],["Player 14","Player 12"],0],
-  [["Player 20","Player 17"],["Player 10","Player 4"],0],
-  [["Player 20","Player 6"],["Player 8","Player 19"],1],
-  [["Player 20","Player 13"],["Player 22","Player 12"],1],
-  [["Player 7","Player 21"],["Player 13","Player 6"],0],
-  [["Player 7","Player 5"],["Player 14","Player 22"],0],
-  [["Player 7","Player 9"],["Player 19","Player 11"],0],
-  [["Player 18","Player 19"],["Player 17","Player 20"],0],
-  [["Player 11","Player 20"],["Player 22","Player 12"],1],
-  [["Player 18","Player 11"],["Player 23","Player 4"],1],
-  [["Player 18","Player 11"],["Player 5","Player 7"],0],
-  [["Player 18","Player 8"],["Player 21","Player 5"],1],
-  [["Player 18","Player 11"],["Player 14","Player 22"],0],
-  [["Player 18","Player 11"],["Player 24","Player 16"],0],
-  [["Player 5","Player 7"],["Player 14","Player 22"],1],
-  [["Player 5","Player 9"],["Player 18","Player 19"],0],
-  [["Player 5"],["Player 6"],0],
-  [["Player 5"],["Player 14"],0],
-  [["Player 8","Player 11"],["Player 5","Player 7"],1]
+  [["Andrew Hanna","Rafe Underwood"],["Gus Hartley","Peter Vance"],0],
+  [["Andrew Hanna","Rafe Underwood"],["Cole Baxter","Wes Tanaka"],0],
+  [["Tomas Reyes","Rory Feldman"],["Gus Hartley","Grant Mulligan"],0],
+  [["Tomas Reyes","Jonah Kestler"],["Luis Ferrer","Miles Ashford"],0],
+  [["Andrew Hanna","Rafe Underwood"],["Tomas Reyes","Jonah Kestler"],0],
+  [["Tomas Reyes","Jonah Kestler"],["Gus Hartley","Peter Vance"],0],
+  [["Wes Tanaka"],["Tomas Reyes"],0],
+  [["Tomas Reyes","Rory Feldman"],["Luis Ferrer","Hugh Lambert"],0],
+  [["Tomas Reyes"],["Luis Ferrer"],0],
+  [["Gus Hartley"],["Tomas Reyes"],0],
+  [["Eli Brennan","Gus Hartley"],["Tomas Reyes","Trey Donovan"],1],
+  [["Cole Baxter","Sam Okafor"],["Luis Ferrer","Alec Winston"],1],
+  [["Cole Baxter","Sam Okafor"],["Danny Corrigan","Vic Salerno"],1],
+  [["Cole Baxter","Bo Sinclair"],["Danny Corrigan","Neil Cavanaugh"],1],
+  [["Cole Baxter","Bo Sinclair"],["Tomas Reyes","Rory Feldman"],1],
+  [["Cole Baxter","Wes Tanaka"],["Danny Corrigan","Dev Ramaswamy"],1],
+  [["Cole Baxter"],["Danny Corrigan"],1],
+  [["Cole Baxter"],["Andrew Hanna"],0],
+  [["Cole Baxter"],["Luis Ferrer"],1],
+  [["Cole Baxter"],["Gus Hartley"],1],
+  [["Cole Baxter","Bo Sinclair"],["Gus Hartley","Grant Mulligan"],1],
+  [["Cole Baxter","Danny Corrigan"],["Andrew Hanna","Luis Ferrer"],0],
+  [["Cole Baxter","Wes Tanaka"],["Tomas Reyes","Jonah Kestler"],1],
+  [["Cole Baxter","Wes Tanaka"],["Gus Hartley","Peter Vance"],0],
+  [["Wes Tanaka"],["Miles Ashford"],0],
+  [["Wes Tanaka"],["Luis Ferrer"],0],
+  [["Wes Tanaka","Bo Sinclair"],["Peter Vance","Grant Mulligan"],0],
+  [["Andrew Hanna","Owen Pruitt"],["Tomas Reyes","Rory Feldman"],0],
+  [["Andrew Hanna","Owen Pruitt"],["Tomas Reyes","Jonah Kestler"],0],
+  [["Andrew Hanna","Owen Pruitt"],["Cole Baxter","Bo Sinclair"],0],
+  [["Jonah Kestler","Rory Feldman"],["Neil Cavanaugh","Vic Salerno"],1],
+  [["Wes Tanaka","Sam Okafor"],["Dev Ramaswamy","Vic Salerno"],0],
+  [["Bo Sinclair","Sam Okafor"],["Grant Mulligan","Eli Brennan"],0],
+  [["Andrew Hanna","Jonah Kestler"],["Luis Ferrer","Miles Ashford"],0],
+  [["Luis Ferrer","Peter Vance"],["Tomas Reyes","Rory Feldman"],0],
+  [["Tomas Reyes","Miles Ashford"],["Andrew Hanna","Owen Pruitt"],0],
+  [["Alec Winston","Luis Ferrer"],["Gus Hartley","Eli Brennan"],0],
+  [["Alec Winston","Miles Ashford"],["Dev Ramaswamy","Vic Salerno"],0],
+  [["Alec Winston","Miles Ashford"],["Wes Tanaka","Sam Okafor"],0],
+  [["Alec Winston","Luis Ferrer"],["Tomas Reyes","Trey Donovan"],1],
+  [["Alec Winston","Hugh Lambert"],["Neil Cavanaugh","Vic Salerno"],1],
+  [["Grant Mulligan","Gus Hartley"],["Hugh Lambert","Luis Ferrer"],0],
+  [["Grant Mulligan","Peter Vance"],["Dev Ramaswamy","Neil Cavanaugh"],0],
+  [["Grant Mulligan","Eli Brennan"],["Trey Donovan","Rory Feldman"],0],
+  [["Jonah Kestler","Trey Donovan"],["Miles Ashford","Alec Winston"],0],
+  [["Rory Feldman","Alec Winston"],["Neil Cavanaugh","Vic Salerno"],1],
+  [["Jonah Kestler","Rory Feldman"],["Bo Sinclair","Sam Okafor"],1],
+  [["Jonah Kestler","Rory Feldman"],["Peter Vance","Grant Mulligan"],0],
+  [["Jonah Kestler","Tomas Reyes"],["Gus Hartley","Peter Vance"],1],
+  [["Jonah Kestler","Rory Feldman"],["Dev Ramaswamy","Neil Cavanaugh"],0],
+  [["Jonah Kestler","Rory Feldman"],["Rafe Underwood","Owen Pruitt"],0],
+  [["Peter Vance","Grant Mulligan"],["Dev Ramaswamy","Neil Cavanaugh"],1],
+  [["Peter Vance","Eli Brennan"],["Jonah Kestler","Trey Donovan"],0],
+  [["Peter Vance"],["Luis Ferrer"],0],
+  [["Peter Vance"],["Dev Ramaswamy"],0],
+  [["Tomas Reyes","Rory Feldman"],["Peter Vance","Grant Mulligan"],1]
 ];
 
 function seed(){
-  const players = SEED_ROSTER.map(([name,tee])=>({
-    id: uid("p"), name, index: null, sex:"M", email:"", homeTee: tee, notes:""
+  const players = SEED_ROSTER.map(([name,tee,index])=>({
+    id: uid("p"), name, index: index==null? null : index, sex:"M", email:"", homeTee: tee, notes:""
   }));
   const byName = {}; players.forEach(p=> byName[p.name]=p.id);
 
@@ -984,8 +1012,7 @@ function viewCard(m, gid){
   if(!canTouch){
     cb.innerHTML = "<div class='tiny muted'>Viewing "+esc(g.teeTime)+"'s card — read-only. Log in with their code to score for them.</div>";
   } else if(!g.scorer){
-    cb.innerHTML = "<div class='tiny muted' style='margin-bottom:9px'>Nobody is keeping this card yet.</div>";
-    const b = el("button","btn block","Keep this card");
+    const b = el("button","btn block","Keep score");
     b.onclick = ()=>{ g.scorer = Store.s.deviceId; Store.save(); render(); };
     cb.appendChild(b);
   } else {
@@ -1137,7 +1164,8 @@ function viewBets(m){
   const hb = el("div","bd");
   hb.innerHTML = "<div class='tiny muted' style='margin-bottom:10px'>A side is one or two players. "+
     "A pair is scored on their <b>better ball</b>. Payout = stake × the stroke difference, capped both ways. "+
-    "Scored <b>"+(cfg.basis==="net"?"net":"gross")+"</b>.</div>";
+    "Scored <b>"+(cfg.basis==="net"?"net":"gross")+"</b>.<br>"+
+    "<b>Swipe a bet left</b> to reject it, or tap it to edit.</div>";
   const add = el("button","btn block","+ Book a bet");
   add.onclick = ()=> betSheet(null);
   hb.appendChild(add);
@@ -1177,6 +1205,9 @@ function betList(title, list, dim){
   const bd = el("div","bd flush");
   list.forEach(bet=>{
     const r = betResult(bet);
+    const wrap = el("div","betwrap");
+    const act = el("div","betact"+(bet.rejected?" restore":""), bet.rejected? "Restore<br>bet" : "Reject<br>bet");
+    wrap.appendChild(act);
     const row = el("div","betrow"+(dim?" void":""));
     const side = (ids, score, amt, win)=>
       '<div class="betside">'+
@@ -1192,11 +1223,64 @@ function betList(title, list, dim){
         '<span>$'+bet.stake+'/stroke · $'+bet.cap+' cap'+(r.capped?' · <b>capped</b>':'')+'</span>'+
         '<span class="right">'+(r.thru===H? "final" : r.thru? "thru "+r.thru : "not started")+'</span>'+
       '</div>';
-    row.onclick = ()=> betSheet(bet);
-    bd.appendChild(row);
+    attachSwipe(row, act, bet);
+    wrap.appendChild(row);
+    bd.appendChild(wrap);
   });
   c.appendChild(bd);
   return c;
+}
+
+/* Swipe a bet left to reject it (or restore a rejected one). Tapping still
+   opens the editor — we only swallow the tap if the finger actually moved.
+   Uses pointer events so it works with a mouse for testing too. */
+const SWIPE_OPEN = 118, SWIPE_TRIGGER = 62;
+function attachSwipe(row, act, bet){
+  let x0=0, y0=0, dx=0, dragging=false, decided=false, moved=false;
+
+  const setX = v => { row.style.transform = v ? "translateX("+v+"px)" : ""; };
+  const snapBack = ()=>{ row.classList.add("snap"); setX(0); setTimeout(()=>row.classList.remove("snap"), 200); };
+
+  row.addEventListener("pointerdown", e=>{
+    if(e.pointerType==="mouse" && e.button!==0) return;
+    x0=e.clientX; y0=e.clientY; dx=0; dragging=true; decided=false; moved=false;
+    row.classList.add("sliding");
+  });
+
+  row.addEventListener("pointermove", e=>{
+    if(!dragging) return;
+    const mx = e.clientX-x0, my = e.clientY-y0;
+    if(!decided){
+      if(Math.abs(mx)<6 && Math.abs(my)<6) return;
+      decided = true;
+      // vertical intent wins — let the list scroll instead of hijacking it
+      if(Math.abs(my) > Math.abs(mx)){ dragging=false; row.classList.remove("sliding"); return; }
+      row.setPointerCapture(e.pointerId);
+    }
+    moved = true;
+    dx = clamp(mx, -SWIPE_OPEN, 0);
+    setX(dx);
+  });
+
+  const finish = ()=>{
+    if(!dragging) return;
+    dragging=false;
+    row.classList.remove("sliding");
+    if(dx <= -SWIPE_TRIGGER){
+      setX(-SWIPE_OPEN);
+      setTimeout(()=>{
+        bet.rejected = !bet.rejected;
+        Store.save(); render();
+      }, 120);
+    } else snapBack();
+  };
+  row.addEventListener("pointerup", finish);
+  row.addEventListener("pointercancel", ()=>{ if(dragging){ dragging=false; row.classList.remove("sliding"); snapBack(); } });
+
+  row.addEventListener("click", e=>{
+    if(moved){ e.preventDefault(); e.stopPropagation(); moved=false; return; }
+    betSheet(bet);
+  });
 }
 
 function betSheet(bet){
@@ -1361,24 +1445,47 @@ function viewSetup(m){
   if(sub && sub.type==="course")   return setupCourse(m);
   if(sub && sub.type==="rules")    return setupRules(m);
 
-  const c = el("div","card"); const bd = el("div","bd flush");
-  const link = (t,d,go)=>{
-    const b = el("button","setuplink",
-      "<span class='grow'>"+t+"<span class='d'>"+d+"</span></span><span class='chev'></span>");
-    b.onclick = ()=>{ sub={type:go}; render(); window.scrollTo(0,0); };
-    bd.appendChild(b);
+  /* Grouped by when you actually touch it: set the field up, then draw
+     teams and hand out codes on the morning, then rules you rarely change. */
+  const section = (title, links)=>{
+    m.appendChild(el("div","setuphd", title));
+    const c = el("div","card"); const bd = el("div","bd flush");
+    links.forEach(([t,d,go])=>{
+      const b = el("button","setuplink",
+        "<span class='grow'>"+esc(t)+"<span class='d'>"+esc(d)+"</span></span><span class='chev'></span>");
+      b.onclick = ()=>{ sub={type:go}; render(); window.scrollTo(0,0); };
+      bd.appendChild(b);
+    });
+    c.appendChild(bd); m.appendChild(c);
   };
-  link("Player repository", Store.s.players.length+" players on file", "players");
-  link("Today's field", inGame().length+" playing · tees & indexes", "field");
-  link("Build teams", G().draw ? (DRAW_METHODS.find(x=>x[0]===G().draw.method)||[,"Custom"])[1] : "Not built yet", "draw");
-  link("Groups & tee times", G().groups.length+" groups", "groups");
-  link(G().startedAt ? "Game codes" : "Start the game", G().startedAt ? "Started "+new Date(G().startedAt).toLocaleString() : "Generates a code for every group", "codes");
-  link("Course", course().name+" · "+course().tees.length+" tees", "course");
-  link("Game rules & money", "Format, handicaps, stakes, purse", "rules");
-  c.appendChild(bd); m.appendChild(c);
 
+  const drawLabel = G().draw
+    ? (DRAW_METHODS.find(x=>x[0]===G().draw.method)||[,"Custom"])[1] + (G().draw.manuallyAdjusted? " · edited by hand" : "")
+    : "Not built yet";
+  const noIdx = inGame().filter(pid=>{ const p=player(pid); return p && p.index==null; }).length;
+
+  section("Who's playing", [
+    ["Player repository", Store.s.players.length+" players on file", "players"],
+    ["Today's field", inGame().length+" playing"+(noIdx? " · "+noIdx+" missing an index" : " · all have an index"), "field"]
+  ]);
+
+  section("Today's game", [
+    ["Build teams", drawLabel, "draw"],
+    ["Groups & tee times", G().groups.length+" groups", "groups"],
+    [G().startedAt ? "Game codes" : "Start the game",
+      G().startedAt
+        ? "Started "+new Date(G().startedAt).toLocaleString()
+        : "Generates a code for every group",
+      "codes"]
+  ]);
+
+  section("Rules & course", [
+    ["Game rules & money", "Format, handicaps, stakes, purse", "rules"],
+    ["Course", course().name+" · "+course().tees.length+" tees", "course"]
+  ]);
+
+  m.appendChild(el("div","setuphd","Data"));
   const d = el("div","card");
-  d.appendChild(el("div","hd","<h3>Data</h3>"));
   const db = el("div","bd");
   const ex = el("button","btn ghost block","Export game as JSON");
   ex.onclick = exportJSON; ex.style.marginBottom="8px";
@@ -1397,7 +1504,8 @@ function viewSetup(m){
   db.append(ex,cl,rs);
   d.appendChild(db); m.appendChild(d);
 
-  m.appendChild(el("div","tiny muted","Build "+BUILD+" · scores are saved on this device. Firebase sync is wired but not yet configured."));
+  m.appendChild(el("div","tiny muted","Build "+BUILD+" · "+
+    (FIREBASE_CONFIG ? "syncing live to every device in this game" : "saved on this device only")+"."));
 }
 
 function backBtn(m,label){
@@ -1578,7 +1686,7 @@ function setupImport(m){
 
   const ta = el("textarea");
   ta.style.cssText = "width:100%;min-height:120px;margin-top:9px;border:1px solid var(--line);border-radius:9px;padding:9px;background:#fff;font:12px/1.4 ui-monospace,SFMono-Regular,Consolas,monospace";
-  ta.placeholder = "Name,Index\nPlayer 1,8.4\nPlayer 2,15.1\n...";
+  ta.placeholder = "Name,Index\nAndrew Hanna,8.4\nMarcus Whitfield,15.1\n...";
   ta.value = importState.raw;
   ta.oninput = ()=>{ importState.raw = ta.value; };
   bd.appendChild(ta);
@@ -1770,16 +1878,28 @@ function setupCodes(m){
   const ac = el("div","card");
   ac.appendChild(el("div","hd","<h3>Admin code</h3>"));
   const ab = el("div","bd");
-  ab.appendChild(el("div","tiny muted","Gets into Setup and can edit any group's card. Keep this one to yourself."));
+  ab.appendChild(el("div","tiny muted","Gets into Setup and can edit any group's card. Keep this one to yourself — set it to whatever you'll remember."));
   const arow = el("div","row"); arow.style.marginTop="9px";
-  arow.appendChild(el("div","score mono",Store.s.admin.code));
-  const aregen = el("button","btn ghost sm right","Regenerate");
+  const ainp = el("input"); ainp.type="text"; ainp.value = Store.s.admin.code;
+  ainp.autocapitalize="characters"; ainp.maxLength = 12;
+  ainp.style.cssText="font-size:19px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;text-align:center";
+  const asave = el("button","btn sm","Save"); asave.style.flex="none";
+  asave.onclick = ()=>{
+    const v = ainp.value.trim().toUpperCase();
+    if(!/^[A-Z0-9]{3,12}$/.test(v)) return alert("Use 3–12 letters or numbers, no spaces or symbols.");
+    if(G().groups.some(gr=> (gr.code||"").toUpperCase()===v))
+      return alert("That's already one of the group codes — pick a different one.");
+    Store.s.admin.code = v; Store.save(); render();
+  };
+  arow.append(ainp, asave);
+  ab.appendChild(arow);
+  const aregen = el("button","btn ghost sm","Generate a random one instead");
+  aregen.style.marginTop="8px";
   aregen.onclick = ()=>{
-    if(!confirm("Regenerate the admin code? The old one stops working immediately, everywhere.")) return;
+    if(!confirm("Replace the admin code? The old one stops working immediately, everywhere.")) return;
     Store.s.admin.code = randCode(); Store.save(); render();
   };
-  arow.appendChild(aregen);
-  ab.appendChild(arow);
+  ab.appendChild(aregen);
   ac.appendChild(ab); m.appendChild(ac);
 
   const gc = el("div","card");
