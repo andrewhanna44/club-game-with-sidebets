@@ -42,6 +42,11 @@ header .sub{font-size:12px;opacity:.72;line-height:1.2;margin-top:2px}
 header .spacer{flex:1}
 .hbtn{background:rgba(255,255,255,.14);border:0;color:#fff;border-radius:9px;padding:7px 11px;font-size:13px;font-weight:600}
 .hbtn:active{background:rgba(255,255,255,.28)}
+.syncpill{display:flex;align-items:center;gap:5px;font-size:10.5px;color:rgba(255,255,255,.65);margin-top:3px}
+.syncpill .led{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.35);flex:none}
+.syncpill.on .led{background:#5fd685}
+.syncpill.err{color:#ffd7d0}
+.syncpill.err .led{background:#ff8a75}
 
 nav{
   position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;
@@ -196,6 +201,8 @@ const KEY = "clubgame.v1";
 const $  = (s,r)=> (r||document).querySelector(s);
 const el = (t,c,h)=>{ const e=document.createElement(t); if(c) e.className=c; if(h!=null) e.innerHTML=h; return e; };
 const uid = p => p + Math.random().toString(36).slice(2,9);
+const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";   // no 0/O/1/I — too easy to mis-key
+const randCode = (len=4)=>{ let s=""; for(let i=0;i<len;i++) s+=CODE_CHARS[Math.floor(Math.random()*CODE_CHARS.length)]; return s; };
 const esc = s => String(s==null?"":s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const clamp = (v,lo,hi)=> Math.max(lo, Math.min(hi, v));
 const sum = a => a.reduce((x,y)=>x+y,0);
@@ -238,85 +245,88 @@ const CROASDAILE = {
 };
 
 /* ------------------------------------------------------------
-   SEED — the 26 Jul 2026 game, straight off the spreadsheet.
-   Handicap indexes are unknown (the file had none), so they are
-   left null. The app degrades to gross until they're filled in.
+   SEED — demo data shaped like a real 24-player Sunday game
+   (tee assignments, groupings, and side-bet pairings all mirror
+   an actual round), but with generic placeholder names — this
+   is a starting template, not any specific group of people.
+   Handicap indexes are unknown, so they're left null; the app
+   degrades to gross scoring until they're filled in.
    ------------------------------------------------------------ */
 const SEED_ROSTER = [
-  ["C. O'Shea","gold"],    ["M. DeSevo","white"],  ["B. Burgess","gold"],   ["J. MacDonald","bw"],
-  ["G. Moon","gb"],        ["T. Blanco","gb"],     ["J. Gould","blue"],     ["Nav Rungta","gb"],
-  ["R. Wainio","blue"],    ["K. Babcock","gb"],    ["M. Hook","gb"],        ["J. McCallie","bw"],
-  ["J. Oros","gb"],        ["C. Baltz","gb"],      ["R. Newbold","gold"],   ["J. Folkerth","gb"],
-  ["Tim Maloney","gold"],  ["B. Barnwell","gb"],   ["J. Taylor","blue"],    ["B. Davis","blue"],
-  ["T. Brooks","blue"],    ["R. Easley","blue"],   ["M. Rooney","gb"],      ["G. Perna","gb"]
+  ["Player 1","gold"],    ["Player 2","white"],  ["Player 3","gold"],   ["Player 4","bw"],
+  ["Player 5","gb"],        ["Player 6","gb"],     ["Player 7","blue"],     ["Player 8","gb"],
+  ["Player 9","blue"],    ["Player 10","gb"],    ["Player 11","gb"],        ["Player 12","bw"],
+  ["Player 13","gb"],        ["Player 14","gb"],      ["Player 15","gold"],   ["Player 16","gb"],
+  ["Player 17","gold"],  ["Player 18","gb"],   ["Player 19","blue"],    ["Player 20","blue"],
+  ["Player 21","blue"],    ["Player 22","blue"],   ["Player 23","gb"],      ["Player 24","gb"]
 ];
 const SEED_GROUPS = [
-  ["7:00 AM", ["B. Burgess","C. Baltz","R. Easley","J. McCallie"]],
-  ["7:10 AM", ["Nav Rungta","B. Barnwell","M. Hook","J. Taylor"]],
-  ["7:20 AM", ["T. Blanco","Tim Maloney","J. Oros","B. Davis"]],
-  ["7:30 AM", ["C. O'Shea","G. Perna","J. Folkerth","M. DeSevo"]],
-  ["7:40 AM", ["T. Brooks","G. Moon","J. Gould","R. Wainio"]],
-  ["7:50 AM", ["R. Newbold","K. Babcock","M. Rooney","J. MacDonald"]]
+  ["7:00 AM", ["Player 3","Player 14","Player 22","Player 12"]],
+  ["7:10 AM", ["Player 8","Player 18","Player 11","Player 19"]],
+  ["7:20 AM", ["Player 6","Player 17","Player 13","Player 20"]],
+  ["7:30 AM", ["Player 1","Player 24","Player 16","Player 2"]],
+  ["7:40 AM", ["Player 21","Player 5","Player 7","Player 9"]],
+  ["7:50 AM", ["Player 15","Player 10","Player 23","Player 4"]]
 ];
 // Bets as booked that Sunday. sideA vs sideB; rejected ones kept so the
 // screen matches the paper. Stake/cap default to the house $5 / $25.
 const SEED_BETS = [
-  [["C. O'Shea","G. Perna"],["T. Brooks","G. Moon"],0],
-  [["C. O'Shea","G. Perna"],["R. Newbold","K. Babcock"],0],
-  [["Nav Rungta","M. Hook"],["T. Brooks","J. Gould"],0],
-  [["Nav Rungta","B. Barnwell"],["T. Blanco","Tim Maloney"],0],
-  [["C. O'Shea","G. Perna"],["Nav Rungta","B. Barnwell"],0],
-  [["Nav Rungta","B. Barnwell"],["T. Brooks","G. Moon"],0],
-  [["K. Babcock"],["Nav Rungta"],0],
-  [["Nav Rungta","M. Hook"],["T. Blanco","J. Oros"],0],
-  [["Nav Rungta"],["T. Blanco"],0],
-  [["T. Brooks"],["Nav Rungta"],0],
-  [["R. Wainio","T. Brooks"],["Nav Rungta","J. Taylor"],1],
-  [["R. Newbold","J. MacDonald"],["T. Blanco","B. Davis"],1],
-  [["R. Newbold","J. MacDonald"],["B. Burgess","J. McCallie"],1],
-  [["R. Newbold","M. Rooney"],["B. Burgess","R. Easley"],1],
-  [["R. Newbold","M. Rooney"],["Nav Rungta","M. Hook"],1],
-  [["R. Newbold","K. Babcock"],["B. Burgess","C. Baltz"],1],
-  [["R. Newbold"],["B. Burgess"],1],
-  [["R. Newbold"],["C. O'Shea"],0],
-  [["R. Newbold"],["T. Blanco"],1],
-  [["R. Newbold"],["T. Brooks"],1],
-  [["R. Newbold","M. Rooney"],["T. Brooks","J. Gould"],1],
-  [["R. Newbold","B. Burgess"],["C. O'Shea","T. Blanco"],0],
-  [["R. Newbold","K. Babcock"],["Nav Rungta","B. Barnwell"],1],
-  [["R. Newbold","K. Babcock"],["T. Brooks","G. Moon"],0],
-  [["K. Babcock"],["Tim Maloney"],0],
-  [["K. Babcock"],["T. Blanco"],0],
-  [["K. Babcock","M. Rooney"],["G. Moon","J. Gould"],0],
-  [["C. O'Shea","J. Folkerth"],["Nav Rungta","M. Hook"],0],
-  [["C. O'Shea","J. Folkerth"],["Nav Rungta","B. Barnwell"],0],
-  [["C. O'Shea","J. Folkerth"],["R. Newbold","M. Rooney"],0],
-  [["B. Barnwell","M. Hook"],["R. Easley","J. McCallie"],1],
-  [["K. Babcock","J. MacDonald"],["C. Baltz","J. McCallie"],0],
-  [["M. Rooney","J. MacDonald"],["J. Gould","R. Wainio"],0],
-  [["C. O'Shea","B. Barnwell"],["T. Blanco","Tim Maloney"],0],
-  [["T. Blanco","G. Moon"],["Nav Rungta","M. Hook"],0],
-  [["Nav Rungta","Tim Maloney"],["C. O'Shea","J. Folkerth"],0],
-  [["B. Davis","T. Blanco"],["T. Brooks","R. Wainio"],0],
-  [["B. Davis","Tim Maloney"],["C. Baltz","J. McCallie"],0],
-  [["B. Davis","Tim Maloney"],["K. Babcock","J. MacDonald"],0],
-  [["B. Davis","T. Blanco"],["Nav Rungta","J. Taylor"],1],
-  [["B. Davis","J. Oros"],["R. Easley","J. McCallie"],1],
-  [["J. Gould","T. Brooks"],["J. Oros","T. Blanco"],0],
-  [["J. Gould","G. Moon"],["C. Baltz","R. Easley"],0],
-  [["J. Gould","R. Wainio"],["J. Taylor","M. Hook"],0],
-  [["B. Barnwell","J. Taylor"],["Tim Maloney","B. Davis"],0],
-  [["M. Hook","B. Davis"],["R. Easley","J. McCallie"],1],
-  [["B. Barnwell","M. Hook"],["M. Rooney","J. MacDonald"],1],
-  [["B. Barnwell","M. Hook"],["G. Moon","J. Gould"],0],
-  [["B. Barnwell","Nav Rungta"],["T. Brooks","G. Moon"],1],
-  [["B. Barnwell","M. Hook"],["C. Baltz","R. Easley"],0],
-  [["B. Barnwell","M. Hook"],["G. Perna","J. Folkerth"],0],
-  [["G. Moon","J. Gould"],["C. Baltz","R. Easley"],1],
-  [["G. Moon","R. Wainio"],["B. Barnwell","J. Taylor"],0],
-  [["G. Moon"],["T. Blanco"],0],
-  [["G. Moon"],["C. Baltz"],0],
-  [["Nav Rungta","M. Hook"],["G. Moon","J. Gould"],1]
+  [["Player 1","Player 24"],["Player 21","Player 5"],0],
+  [["Player 1","Player 24"],["Player 15","Player 10"],0],
+  [["Player 8","Player 11"],["Player 21","Player 7"],0],
+  [["Player 8","Player 18"],["Player 6","Player 17"],0],
+  [["Player 1","Player 24"],["Player 8","Player 18"],0],
+  [["Player 8","Player 18"],["Player 21","Player 5"],0],
+  [["Player 10"],["Player 8"],0],
+  [["Player 8","Player 11"],["Player 6","Player 13"],0],
+  [["Player 8"],["Player 6"],0],
+  [["Player 21"],["Player 8"],0],
+  [["Player 9","Player 21"],["Player 8","Player 19"],1],
+  [["Player 15","Player 4"],["Player 6","Player 20"],1],
+  [["Player 15","Player 4"],["Player 3","Player 12"],1],
+  [["Player 15","Player 23"],["Player 3","Player 22"],1],
+  [["Player 15","Player 23"],["Player 8","Player 11"],1],
+  [["Player 15","Player 10"],["Player 3","Player 14"],1],
+  [["Player 15"],["Player 3"],1],
+  [["Player 15"],["Player 1"],0],
+  [["Player 15"],["Player 6"],1],
+  [["Player 15"],["Player 21"],1],
+  [["Player 15","Player 23"],["Player 21","Player 7"],1],
+  [["Player 15","Player 3"],["Player 1","Player 6"],0],
+  [["Player 15","Player 10"],["Player 8","Player 18"],1],
+  [["Player 15","Player 10"],["Player 21","Player 5"],0],
+  [["Player 10"],["Player 17"],0],
+  [["Player 10"],["Player 6"],0],
+  [["Player 10","Player 23"],["Player 5","Player 7"],0],
+  [["Player 1","Player 16"],["Player 8","Player 11"],0],
+  [["Player 1","Player 16"],["Player 8","Player 18"],0],
+  [["Player 1","Player 16"],["Player 15","Player 23"],0],
+  [["Player 18","Player 11"],["Player 22","Player 12"],1],
+  [["Player 10","Player 4"],["Player 14","Player 12"],0],
+  [["Player 23","Player 4"],["Player 7","Player 9"],0],
+  [["Player 1","Player 18"],["Player 6","Player 17"],0],
+  [["Player 6","Player 5"],["Player 8","Player 11"],0],
+  [["Player 8","Player 17"],["Player 1","Player 16"],0],
+  [["Player 20","Player 6"],["Player 21","Player 9"],0],
+  [["Player 20","Player 17"],["Player 14","Player 12"],0],
+  [["Player 20","Player 17"],["Player 10","Player 4"],0],
+  [["Player 20","Player 6"],["Player 8","Player 19"],1],
+  [["Player 20","Player 13"],["Player 22","Player 12"],1],
+  [["Player 7","Player 21"],["Player 13","Player 6"],0],
+  [["Player 7","Player 5"],["Player 14","Player 22"],0],
+  [["Player 7","Player 9"],["Player 19","Player 11"],0],
+  [["Player 18","Player 19"],["Player 17","Player 20"],0],
+  [["Player 11","Player 20"],["Player 22","Player 12"],1],
+  [["Player 18","Player 11"],["Player 23","Player 4"],1],
+  [["Player 18","Player 11"],["Player 5","Player 7"],0],
+  [["Player 18","Player 8"],["Player 21","Player 5"],1],
+  [["Player 18","Player 11"],["Player 14","Player 22"],0],
+  [["Player 18","Player 11"],["Player 24","Player 16"],0],
+  [["Player 5","Player 7"],["Player 14","Player 22"],1],
+  [["Player 5","Player 9"],["Player 18","Player 19"],0],
+  [["Player 5"],["Player 6"],0],
+  [["Player 5"],["Player 14"],0],
+  [["Player 8","Player 11"],["Player 5","Player 7"],1]
 ];
 
 function seed(){
@@ -343,7 +353,11 @@ function seed(){
   players.forEach(p=> scores[p.id] = new Array(H).fill(null));
 
   return {
-    build: BUILD, me: null,
+    build: BUILD,
+    admin: { code: randCode() },                          // shared — synced, gates Setup + edit-anywhere
+    session: { role:null, groupId:null },                 // per-device — never synced
+    deviceId: uid("d"),                                    // per-device — never synced, claims scorecards
+    meta: { scores:{}, players:{}, groups:{}, bets:{}, entrants:{}, draw:0, settings:0, admin:0 },
     players, courses:[CROASDAILE],
     game: {
       id: uid("gm"), name:"Sunday Game", date:"2026-07-26", courseId:"croasdaile",
@@ -363,11 +377,15 @@ function seed(){
    ------------------------------------------------------------ */
 const Store = {
   s:null,
+  freshlySeeded:false,
+  isFirstEverDevice:false,
   load(){
     try{
       const raw = localStorage.getItem(KEY);
       if(raw){ this.s = JSON.parse(raw); this.migrate(); return; }
     }catch(e){ console.warn("load failed, reseeding", e); }
+    this.freshlySeeded = true;   // this device made this up locally — don't trust it over real shared data
+    this.isFirstEverDevice = true;   // provisional; Sync.init() confirms once it knows whether shared data exists
     this.s = seed(); this.save();
   },
   migrate(){
@@ -379,11 +397,16 @@ const Store = {
     s.players.forEach(p=>{ if(!s.scores[p.id]) s.scores[p.id] = new Array(H).fill(null); });
     if(!s.bets) s.bets = [];
     if(s.game.draw===undefined) s.game.draw = null;
+    if(!s.meta) s.meta = { scores:{}, players:{}, groups:{}, bets:{}, entrants:{}, draw:0, settings:0, admin:0 };
+    if(s.meta.admin===undefined) s.meta.admin = 0;
+    if(!s.admin) s.admin = { code: randCode() };
+    if(!s.session) s.session = { role:null, groupId:null };
+    if(!s.deviceId) s.deviceId = uid("d");
   },
   save(){
     try{ localStorage.setItem(KEY, JSON.stringify(this.s)); }
     catch(e){ console.error("save failed", e); }
-    Sync.push();
+    Sync.diffAndPush(this.s);
   },
   reset(){ this.s = seed(); this.save(); }
 };
@@ -784,7 +807,9 @@ const ICONS = {
 
 function renderNav(){
   const n = $("#nav"); n.innerHTML = "";
-  [["game","Game"],["bets","Side Bets"],["stats","Stats"],["setup","Setup"]].forEach(([k,label])=>{
+  const tabs = [["game","Game"],["bets","Side Bets"],["stats","Stats"]];
+  if(Store.s.session.role==="admin") tabs.push(["setup","Setup"]);
+  tabs.forEach(([k,label])=>{
     const b = el("button", view===k?"on":"", ICONS[k] + "<span>"+label+"</span>");
     b.onclick = ()=>{ view=k; sub=null; render(); window.scrollTo(0,0); };
     n.appendChild(b);
@@ -795,20 +820,69 @@ function renderHeader(){
   const g = G();
   $("#h-ttl").textContent = g.name || "Club Game";
   const d = g.date ? new Date(g.date+"T12:00:00").toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric"}) : "";
-  $("#h-sub").textContent = [d, course().name].filter(Boolean).join(" · ");
-  const me = Store.s.me ? player(Store.s.me) : null;
-  $("#h-me").textContent = me ? me.name.split(" ").pop() : "Who am I?";
-  $("#h-me").onclick = pickMe;
+  $("#h-sub").innerHTML = esc([d, course().name].filter(Boolean).join(" · "));
+  if(FIREBASE_CONFIG){
+    const pill = el("div","syncpill"+(Sync.writeErr?" err":(Sync.online?" on":"")));
+    pill.innerHTML = "<span class='led'></span><span>"+
+      (Sync.writeErr ? "Not syncing — "+esc(Sync.writeErr) : (Sync.ready ? (Sync.online?"Live":"Offline, saved here") : "Connecting…"))+
+      "</span>";
+    $("#h-sub").appendChild(pill);
+  }
+  const sess = Store.s.session;
+  if(sess.role==="admin") $("#h-me").textContent = "Admin · log out";
+  else if(sess.role==="group"){
+    const g = G().groups.find(x=>x.id===sess.groupId);
+    $("#h-me").textContent = (g? g.teeTime : "Group") + " · log out";
+  } else $("#h-me").textContent = "Log in";
+  $("#h-me").onclick = ()=>{
+    if(sess.role){ if(confirm("Log out of this device?")){ sess.role=null; sess.groupId=null; Store.save(); render(); } }
+    else render();
+  };
 }
 
 function render(){
+  if(!Store.s.session.role){ renderHeader(); $("#nav").innerHTML=""; viewLogin($("#main")); return; }
   renderHeader(); renderNav();
+  if(view==="setup" && Store.s.session.role!=="admin"){ view="game"; sub=null; }
   const m = $("#main"); m.innerHTML = "";
   if(sub && sub.type==="card")      viewCard(m, sub.gid);
   else if(view==="game")            viewGame(m);
   else if(view==="bets")            viewBets(m);
   else if(view==="stats")           viewStats(m);
   else if(view==="setup")           viewSetup(m);
+}
+
+function viewLogin(m){
+  m.innerHTML = "";
+  const c = el("div","card"); c.style.marginTop="40px";
+  c.appendChild(el("div","hd","<h3>Log in</h3>"));
+  const bd = el("div","bd");
+  bd.appendChild(el("div","tiny muted","Enter the admin code, or the code for your group, to open the game."));
+  if(Store.isFirstEverDevice){
+    bd.appendChild(el("div","banner","<b>You're the first one here.</b> Your admin code is <b>"+esc(Store.s.admin.code)+
+      "</b> — write it down, it won't be shown like this again. Use it to log in and set everything up."));
+  }
+  const inp = el("input"); inp.type="text"; inp.placeholder="CODE"; inp.style.cssText="margin-top:9px;text-align:center;font-size:20px;letter-spacing:.15em;text-transform:uppercase;font-weight:700";
+  inp.autocapitalize="characters";
+  bd.appendChild(inp);
+  const err = el("div","tiny"); err.style.cssText="color:var(--red);margin-top:7px;min-height:15px";
+  bd.appendChild(err);
+  const go = el("button","btn block","Enter"); go.style.marginTop="9px";
+  const tryLogin = ()=>{
+    const code = inp.value.trim().toUpperCase();
+    if(!code) return;
+    if(code === (Store.s.admin.code||"").toUpperCase()){
+      Store.s.session = { role:"admin", groupId:null }; Store.save(); render(); return;
+    }
+    const g = G().groups.find(x=> x.code && x.code.toUpperCase()===code);
+    if(g){ Store.s.session = { role:"group", groupId:g.id }; Store.save(); render(); return; }
+    err.textContent = "Code not recognized.";
+  };
+  go.onclick = tryLogin;
+  inp.onkeydown = e=>{ if(e.key==="Enter") tryLogin(); };
+  bd.appendChild(go);
+  c.appendChild(bd); m.appendChild(c);
+  setTimeout(()=>inp.focus(), 50);
 }
 
 function banners(m){
@@ -898,35 +972,35 @@ function viewCard(m, gid){
   bar.appendChild(segw);
   m.appendChild(bar);
 
-  // scorer claim
+  // access: admin can touch any card; a group login can only touch its own
+  const isAdmin = Store.s.session.role==="admin";
+  const ownGroup = Store.s.session.role==="group" && Store.s.session.groupId===g.id;
+  const canTouch = isAdmin || ownGroup;
+
   const claim = el("div","card");
   const cb = el("div","bd");
-  if(!g.scorer){
+  if(!canTouch){
+    cb.innerHTML = "<div class='tiny muted'>Viewing "+esc(g.teeTime)+"'s card — read-only. Log in with their code to score for them.</div>";
+  } else if(!g.scorer){
     cb.innerHTML = "<div class='tiny muted' style='margin-bottom:9px'>Nobody is keeping this card yet.</div>";
     const b = el("button","btn block","Keep this card");
-    b.onclick = ()=>{
-      if(!Store.s.me){ pickMe(()=>{ g.scorer=Store.s.me; Store.save(); render(); }); return; }
-      g.scorer = Store.s.me; Store.save(); render();
-    };
+    b.onclick = ()=>{ g.scorer = Store.s.deviceId; Store.save(); render(); };
     cb.appendChild(b);
   } else {
-    const mine = g.scorer === Store.s.me;
-    cb.innerHTML = "<div class='row'><span class='tiny'>Card kept by <b>"+esc(pname(g.scorer))+"</b>"+
-      (mine?" (you)":"")+"</span></div>";
+    const mine = g.scorer === Store.s.deviceId;
+    cb.innerHTML = "<div class='row'><span class='tiny'>"+
+      (mine? "You're keeping this card" : "Another device is keeping this card")+"</span></div>";
     const b = el("button","btn ghost sm right", mine ? "Hand off" : "Take over");
     b.style.marginLeft="auto";
     b.onclick = ()=>{
       if(mine){ g.scorer=null; Store.save(); render(); return; }
-      if(confirm("Take the card from "+pname(g.scorer)+"?")){
-        if(!Store.s.me){ pickMe(()=>{ g.scorer=Store.s.me; Store.save(); render(); }); return; }
-        g.scorer=Store.s.me; Store.save(); render();
-      }
+      if(confirm("Take over this card?")){ g.scorer = Store.s.deviceId; Store.save(); render(); }
     };
     $(".row",cb).appendChild(b);
   }
   claim.appendChild(cb); m.appendChild(claim);
 
-  const canEdit = !g.scorer || g.scorer === Store.s.me;
+  const canEdit = canTouch && (!g.scorer || g.scorer === Store.s.deviceId);
 
   if(cardMode==="full"){ fullCard(m,g); }
   else { holeCard(m,g,canEdit); }
@@ -1281,6 +1355,7 @@ function viewSetup(m){
   if(sub && sub.type==="field")    return setupField(m);
   if(sub && sub.type==="groups")   return setupGroups(m);
   if(sub && sub.type==="draw")     return setupDraw(m);
+  if(sub && sub.type==="codes")    return setupCodes(m);
   if(sub && sub.type==="course")   return setupCourse(m);
   if(sub && sub.type==="rules")    return setupRules(m);
 
@@ -1295,6 +1370,7 @@ function viewSetup(m){
   link("Today's field", inGame().length+" playing · tees & indexes", "field");
   link("Build teams", G().draw ? (DRAW_METHODS.find(x=>x[0]===G().draw.method)||[,"Custom"])[1] : "Not built yet", "draw");
   link("Groups & tee times", G().groups.length+" groups", "groups");
+  link("Game codes", "Admin code + one per group", "codes");
   link("Course", course().name+" · "+course().tees.length+" tees", "course");
   link("Game rules & money", "Format, handicaps, stakes, purse", "rules");
   c.appendChild(bd); m.appendChild(c);
@@ -1500,7 +1576,7 @@ function setupImport(m){
 
   const ta = el("textarea");
   ta.style.cssText = "width:100%;min-height:120px;margin-top:9px;border:1px solid var(--line);border-radius:9px;padding:9px;background:#fff;font:12px/1.4 ui-monospace,SFMono-Regular,Consolas,monospace";
-  ta.placeholder = "Name,Index\nC. O'Shea,8.4\nM. DeSevo,15.1\n...";
+  ta.placeholder = "Name,Index\nPlayer 1,8.4\nPlayer 2,15.1\n...";
   ta.value = importState.raw;
   ta.oninput = ()=>{ importState.raw = ta.value; };
   bd.appendChild(ta);
@@ -1661,6 +1737,57 @@ function setupGroups(m){
     markAdjusted(); Store.save(); render();
   };
   m.appendChild(add);
+}
+
+/* ---------------- GAME CODES ---------------- */
+function setupCodes(m){
+  backBtn(m);
+  m.appendChild(el("div","banner",
+    "<b>These are simple shared codes, not real logins.</b> Anyone who has a code can use it — there's no per-person password. "+
+    "That's fine for keeping a Sunday game's scoring tidy, but it isn't real security. Real per-person accounts need a paid Firebase tier Andrew doesn't have yet."));
+
+  const ac = el("div","card");
+  ac.appendChild(el("div","hd","<h3>Admin code</h3>"));
+  const ab = el("div","bd");
+  ab.appendChild(el("div","tiny muted","Gets into Setup and can edit any group's card. Keep this one to yourself."));
+  const arow = el("div","row"); arow.style.marginTop="9px";
+  arow.appendChild(el("div","score mono",Store.s.admin.code));
+  const aregen = el("button","btn ghost sm right","Regenerate");
+  aregen.onclick = ()=>{
+    if(!confirm("Regenerate the admin code? The old one stops working immediately, everywhere.")) return;
+    Store.s.admin.code = randCode(); Store.save(); render();
+  };
+  arow.appendChild(aregen);
+  ab.appendChild(arow);
+  ac.appendChild(ab); m.appendChild(ac);
+
+  const gc = el("div","card");
+  gc.appendChild(el("div","hd","<h3>Group codes</h3><span class='right pill'>"+G().groups.length+"</span>"));
+  const gb = el("div","bd flush");
+  G().groups.forEach(g=>{
+    const row = el("div","prow");
+    row.innerHTML = "<div class='grow'><div class='nm'>"+esc(g.teeTime)+"</div>"+
+      "<div class='hc'>"+g.pids.map(pid=>pname(pid).replace(/^(\w)\.\s*/,"")).join(", ")+"</div></div>"+
+      "<div class='score mono' style='margin-right:9px'>"+(g.code||"—")+"</div>";
+    const btn = el("button","btn ghost sm", g.code?"Regenerate":"Generate");
+    btn.style.flex="none";
+    btn.onclick = ()=>{ g.code = randCode(); markAdjusted(); Store.save(); render(); };
+    row.appendChild(btn);
+    gb.appendChild(row);
+  });
+  gc.appendChild(gb);
+  const allWrap = el("div","bd");
+  const all = el("button","btn block","Generate codes for every group without one");
+  all.onclick = ()=>{
+    G().groups.forEach(g=>{ if(!g.code) g.code = randCode(); });
+    markAdjusted(); Store.save(); render();
+  };
+  allWrap.appendChild(all);
+  gc.appendChild(allWrap);
+  m.appendChild(gc);
+
+  m.appendChild(el("div","tiny muted",
+    "Hand each group their own code — whoever scores for them logs in with it. Groups don't have to be four — threesomes, twosomes, and bigger groups all work. The admin code is yours; nobody else needs it to play."));
 }
 
 /* ---------------- BUILD TEAMS ---------------- */
@@ -1927,24 +2054,6 @@ function sheet(title, build){
 }
 function closeSheet(){ if(sheetEl){ sheetEl.remove(); sheetEl=null; } }
 
-function pickMe(after){
-  sheet("Who are you?", inner=>{
-    inner.appendChild(el("h2","","Who are you?"));
-    inner.appendChild(el("div","tiny muted","Used to claim a scorecard. Stored only on this phone."));
-    const grid = el("div","pickgrid"); grid.style.marginTop="11px";
-    inGame().forEach(pid=>{
-      const b = el("button","pick"+(Store.s.me===pid?" on":""), esc(pname(pid)));
-      b.onclick = ()=>{ Store.s.me = pid; Store.save(); closeSheet(); render(); if(after) after(); };
-      grid.appendChild(b);
-    });
-    inner.appendChild(grid);
-    const clr = el("button","btn ghost block","Not playing / clear");
-    clr.style.marginTop="11px";
-    clr.onclick = ()=>{ Store.s.me=null; Store.save(); closeSheet(); render(); };
-    inner.appendChild(clr);
-  });
-}
-
 function exportJSON(){
   const blob = new Blob([JSON.stringify(Store.s,null,2)],{type:"application/json"});
   const a = document.createElement("a");
@@ -1955,16 +2064,282 @@ function exportJSON(){
 }
 
 /* ------------------------------------------------------------
-   FIREBASE SEAM
-   Drop a config in and this starts syncing. Until then it's a
-   no-op and the app is purely local — nothing else changes.
+   FIREBASE SYNC
+   Live sync over Realtime Database. Every record (a score cell,
+   a player, a group, a bet) carries its own timestamp so merges
+   are newest-wins — the same pattern proven on the Michigan app.
+   This lets several scorers write at once without clobbering
+   each other: writes are scoped to the smallest reasonable node
+   (scores/$pid/$hole, players/$pid, groups/$gid, bets/$bid —
+   never a whole collection), matching database.rules.json.
+   Set FIREBASE_CONFIG to null to run purely local, no code changes.
    ------------------------------------------------------------ */
-const FIREBASE_CONFIG = null;   // <-- paste the config object here later
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDnOofu0ZzRoCpjl27ZjF9QLmrXr1BDA20",
+  authDomain: "club-game-with-sidebets.firebaseapp.com",
+  databaseURL: "https://club-game-with-sidebets-default-rtdb.firebaseio.com",
+  projectId: "club-game-with-sidebets",
+  storageBucket: "club-game-with-sidebets.firebasestorage.app",
+  messagingSenderId: "99531798281",
+  appId: "1:99531798281:web:db211c0f9472a0c9d385d8"
+};
+
+function mergeRemoteRecord(coll, id, clean){
+  if(coll==="players"){
+    let p = Store.s.players.find(x=>x.id===id);
+    if(!p){ p = {id}; Store.s.players.push(p); if(!Store.s.scores[id]) Store.s.scores[id] = new Array(H).fill(null); }
+    Object.assign(p, clean, {id});
+    return true;
+  }
+  if(coll==="groups"){
+    let g = G().groups.find(x=>x.id===id);
+    if(!g){ g = {id}; G().groups.push(g); }
+    Object.assign(g, clean, {id});
+    return true;
+  }
+  if(coll==="bets"){
+    let b = Store.s.bets.find(x=>x.id===id);
+    if(!b){ b = {id}; Store.s.bets.push(b); }
+    Object.assign(b, clean, {id});
+    return true;
+  }
+  return false;
+}
+function removeRemoteRecord(coll, id){
+  if(coll==="players"){ Store.s.players = Store.s.players.filter(x=>x.id!==id); delete Store.s.scores[id]; return true; }
+  if(coll==="groups"){ G().groups = G().groups.filter(x=>x.id!==id); return true; }
+  if(coll==="bets"){ Store.s.bets = Store.s.bets.filter(x=>x.id!==id); return true; }
+  return false;
+}
+
 const Sync = {
-  ready:false,
-  init(){ /* wired up when FIREBASE_CONFIG is set */ },
-  push(){ if(!this.ready) return; },
-  pull(){ if(!this.ready) return; }
+  ready:false, online:false, writeErr:null, db:null, _fns:null, _offset:0, _prev:null,
+
+  now(){ return Date.now() + this._offset; },
+
+  write(path, val){
+    if(!this.ready) return;
+    const p = this._fns.set(this._fns.ref(this.db, path), val);
+    p.then(()=>{ if(this.writeErr){ this.writeErr=null; render(); } })
+     .catch(err=>{ this.writeErr = (err && (err.code||err.message)) || "write failed"; console.warn("write rejected:", path, this.writeErr); render(); });
+  },
+
+  /** Called from Store.save() every time. Diffs the current state against
+      the last snapshot we pushed and writes only what actually changed,
+      each leaf getting a fresh timestamp. Cheap even at 24 players x 18
+      holes — this is a few hundred string compares, not a bottleneck. */
+  diffAndPush(s){
+    if(!this.ready) return;
+    const prev = this._prev || (this._prev = { scores:{}, players:{}, groups:{}, bets:{}, entrants:{}, draw:null, settings:null });
+
+    Object.keys(s.scores).forEach(pid=>{
+      const arr = s.scores[pid], prevArr = prev.scores[pid] || [];
+      arr.forEach((v,h)=>{
+        if(v !== prevArr[h]){
+          const t = this.now();
+          (s.meta.scores[pid] = s.meta.scores[pid]||{})[h] = t;
+          this.write(`scores/${pid}/${h}`, { v, t });
+        }
+      });
+      prev.scores[pid] = arr.slice();
+    });
+
+    const syncColl = (coll, list)=>{
+      const prevMap = prev[coll] || (prev[coll] = {});
+      const seen = new Set();
+      list.forEach(item=>{
+        seen.add(item.id);
+        const snap = JSON.stringify(item);
+        if(prevMap[item.id] !== snap){
+          const t = this.now();
+          s.meta[coll][item.id] = t;
+          this.write(`${coll}/${item.id}`, Object.assign({}, item, { t }));
+          prevMap[item.id] = snap;
+        }
+      });
+      Object.keys(prevMap).forEach(id=>{
+        if(!seen.has(id)){ this.write(`${coll}/${id}`, null); delete prevMap[id]; delete s.meta[coll][id]; }
+      });
+    };
+    syncColl("players", s.players);
+    syncColl("groups", s.game.groups);
+    syncColl("bets", s.bets);
+
+    {
+      const prevMap = prev.entrants || (prev.entrants = {});
+      const seen = new Set();
+      Object.keys(s.game.entrants).forEach(pid=>{
+        seen.add(pid);
+        const snap = JSON.stringify(s.game.entrants[pid]);
+        if(prevMap[pid] !== snap){
+          const t = this.now();
+          s.meta.entrants[pid] = t;
+          this.write(`entrants/${pid}`, Object.assign({}, s.game.entrants[pid], { t }));
+          prevMap[pid] = snap;
+        }
+      });
+      Object.keys(prevMap).forEach(pid=>{
+        if(!seen.has(pid)){ this.write(`entrants/${pid}`, null); delete prevMap[pid]; delete s.meta.entrants[pid]; }
+      });
+    }
+    {
+      const snap = JSON.stringify(s.game.draw);
+      if(prev.draw !== snap){
+        const t = this.now();
+        s.meta.draw = t;
+        this.write("draw", s.game.draw ? Object.assign({}, s.game.draw, { t }) : null);
+        prev.draw = snap;
+      }
+    }
+    {
+      const snap = JSON.stringify(s.admin);
+      if(prev.admin !== snap){
+        const t = this.now();
+        s.meta.admin = t;
+        this.write("admin", Object.assign({}, s.admin, { t }));
+        prev.admin = snap;
+      }
+    }
+    {
+      const { entrants, groups, draw, ...rest } = s.game;
+      const snap = JSON.stringify(rest);
+      if(prev.settings !== snap){
+        const t = this.now();
+        s.meta.settings = t;
+        this.write("settings", Object.assign({}, rest, { t }));
+        prev.settings = snap;
+      }
+    }
+  },
+
+  async init(){
+    if(!FIREBASE_CONFIG) return;
+    try{
+      const [{ initializeApp }, { getAuth, signInAnonymously }, { getDatabase, ref, onValue, set, get }] = await Promise.all([
+        import("https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js"),
+        import("https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js"),
+        import("https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js")
+      ]);
+      const app = initializeApp(FIREBASE_CONFIG);
+      this.db = getDatabase(app);
+      this._fns = { ref, set };
+      try{ await signInAnonymously(getAuth(app)); }
+      catch(e){ console.warn("anonymous auth unavailable", e && e.code); }
+
+      // Has ANYONE ever connected this database before? If so, this device's
+      // local seed is just whatever it happened to generate on first load —
+      // not the truth — and must never be force-pushed over real shared data.
+      // Only a genuinely first-ever connection gets to seed the database.
+      let remoteAlreadyExists = false;
+      try{ remoteAlreadyExists = (await get(ref(this.db, "settings"))).exists(); }
+      catch(e){ console.warn("initial existence check failed", e); }
+      if(Store.freshlySeeded) Store.isFirstEverDevice = !remoteAlreadyExists;
+
+      // This device seeded itself locally (empty localStorage) but real
+      // shared data already exists elsewhere — discard the local guess so
+      // it doesn't sit alongside the real roster as duplicate ghost records.
+      if(remoteAlreadyExists && Store.freshlySeeded){
+        Store.s.players = []; Store.s.scores = {}; Store.s.bets = [];
+        Store.s.game.groups = []; Store.s.game.entrants = {};
+        Store.s.meta = { scores:{}, players:{}, groups:{}, bets:{}, entrants:{}, draw:0, settings:0, admin:Store.s.meta.admin||0 };
+      }
+
+      onValue(ref(this.db, ".info/connected"), snap=>{ this.online = !!snap.val(); render(); });
+      onValue(ref(this.db, ".info/serverTimeOffset"), snap=>{ const v=snap.val(); if(typeof v==="number") this._offset=v; });
+
+      onValue(ref(this.db, "scores"), snap=>{
+        const all = snap.val()||{}; let changed=false;
+        Object.keys(all).forEach(pid=>{
+          if(!Store.s.scores[pid]) return;
+          const cell = all[pid]||{};
+          Object.keys(cell).forEach(h=>{
+            const rec = cell[h]; if(!rec) return;
+            const localT = (Store.s.meta.scores[pid]||{})[h] || 0;
+            if(rec.t > localT){
+              Store.s.scores[pid][h] = rec.v==null ? null : rec.v;
+              (Store.s.meta.scores[pid] = Store.s.meta.scores[pid]||{})[h] = rec.t;
+              changed = true;
+            }
+          });
+        });
+        if(changed){ localStorage.setItem(KEY, JSON.stringify(Store.s)); render(); }
+      });
+
+      ["players","groups","bets"].forEach(coll=>{
+        onValue(ref(this.db, coll), snap=>{
+          const all = snap.val()||{}; let changed=false;
+          Object.keys(all).forEach(id=>{
+            const rec = all[id]; if(!rec) return;
+            const localT = Store.s.meta[coll][id] || 0;
+            if(rec.t > localT){
+              const clean = Object.assign({}, rec); delete clean.t;
+              if(mergeRemoteRecord(coll, id, clean)) changed = true;
+              Store.s.meta[coll][id] = rec.t;
+            }
+          });
+          const list = coll==="players" ? Store.s.players : coll==="groups" ? G().groups : Store.s.bets;
+          list.slice().forEach(item=>{
+            if(!(item.id in all) && Store.s.meta[coll][item.id]){
+              removeRemoteRecord(coll, item.id);
+              delete Store.s.meta[coll][item.id];
+              changed = true;
+            }
+          });
+          if(changed){ localStorage.setItem(KEY, JSON.stringify(Store.s)); render(); }
+        });
+      });
+
+      onValue(ref(this.db, "entrants"), snap=>{
+        const all = snap.val()||{}; let changed=false;
+        Object.keys(all).forEach(pid=>{
+          const rec = all[pid]; if(!rec) return;
+          const localT = Store.s.meta.entrants[pid] || 0;
+          if(rec.t > localT){
+            const clean = Object.assign({}, rec); delete clean.t;
+            G().entrants[pid] = clean;
+            Store.s.meta.entrants[pid] = rec.t;
+            changed = true;
+          }
+        });
+        Object.keys(G().entrants).forEach(pid=>{
+          if(!(pid in all) && Store.s.meta.entrants[pid]){
+            delete G().entrants[pid]; delete Store.s.meta.entrants[pid]; changed = true;
+          }
+        });
+        if(changed){ localStorage.setItem(KEY, JSON.stringify(Store.s)); render(); }
+      });
+
+      onValue(ref(this.db, "draw"), snap=>{
+        const rec = snap.val(); if(!rec) return;
+        if(rec.t > (Store.s.meta.draw||0)){
+          const clean = Object.assign({}, rec); delete clean.t;
+          G().draw = clean; Store.s.meta.draw = rec.t;
+          localStorage.setItem(KEY, JSON.stringify(Store.s)); render();
+        }
+      });
+
+      onValue(ref(this.db, "admin"), snap=>{
+        const rec = snap.val(); if(!rec) return;
+        if(rec.t > (Store.s.meta.admin||0)){
+          const clean = Object.assign({}, rec); delete clean.t;
+          Store.s.admin = clean; Store.s.meta.admin = rec.t;
+          localStorage.setItem(KEY, JSON.stringify(Store.s)); render();
+        }
+      });
+
+      onValue(ref(this.db, "settings"), snap=>{
+        const rec = snap.val(); if(!rec) return;
+        if(rec.t > (Store.s.meta.settings||0)){
+          const clean = Object.assign({}, rec); delete clean.t;
+          Object.assign(G(), clean); Store.s.meta.settings = rec.t;
+          localStorage.setItem(KEY, JSON.stringify(Store.s)); render();
+        }
+      });
+
+      this.ready = true;
+      if(!remoteAlreadyExists) Store.save();   // first device ever to connect seeds the database
+    }catch(e){ console.warn("firebase init failed", e); }
+  }
 };
 
 /* ---------------- boot ---------------- */

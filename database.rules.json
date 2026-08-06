@@ -1,0 +1,58 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "scores": {
+      "$pid": {
+        "$hole": {
+          ".read": "auth != null",
+          ".write": "auth != null"
+        }
+      }
+    },
+
+    "players": {
+      "$pid": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+
+    "groups": {
+      "$gid": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+
+    "bets": {
+      "$bid": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+
+    "entrants": {
+      "$pid": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+
+    "draw": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+
+    "settings": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+
+    "admin": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    }
+  }
+}
