@@ -367,7 +367,7 @@ function seed(){
       skins:{ basis:"gross" },
       betsCfg:{ basis:"gross", stake:5, cap:25 },
       money:{ entry:40, teamShare:20, skinsShare:20, payouts:[100,10] },
-      entrants, groups, draw:null
+      entrants, groups, draw:null, startedAt:null
     },
     bets, scores
   };
@@ -398,6 +398,7 @@ const Store = {
     s.players.forEach(p=>{ if(!s.scores[p.id]) s.scores[p.id] = new Array(H).fill(null); });
     if(!s.bets) s.bets = [];
     if(s.game.draw===undefined) s.game.draw = null;
+    if(s.game.startedAt===undefined) s.game.startedAt = null;
     if(!s.meta) s.meta = { scores:{}, players:{}, groups:{}, bets:{}, entrants:{}, draw:0, settings:0, admin:0 };
     if(s.meta.admin===undefined) s.meta.admin = 0;
     if(!s.admin) s.admin = { code: randCode() };
@@ -1371,7 +1372,7 @@ function viewSetup(m){
   link("Today's field", inGame().length+" playing · tees & indexes", "field");
   link("Build teams", G().draw ? (DRAW_METHODS.find(x=>x[0]===G().draw.method)||[,"Custom"])[1] : "Not built yet", "draw");
   link("Groups & tee times", G().groups.length+" groups", "groups");
-  link("Game codes", "Admin code + one per group", "codes");
+  link(G().startedAt ? "Game codes" : "Start the game", G().startedAt ? "Started "+new Date(G().startedAt).toLocaleString() : "Generates a code for every group", "codes");
   link("Course", course().name+" · "+course().tees.length+" tees", "course");
   link("Game rules & money", "Format, handicaps, stakes, purse", "rules");
   c.appendChild(bd); m.appendChild(c);
@@ -1746,6 +1747,25 @@ function setupCodes(m){
   m.appendChild(el("div","banner",
     "<b>These are simple shared codes, not real logins.</b> Anyone who has a code can use it — there's no per-person password. "+
     "That's fine for keeping a Sunday game's scoring tidy, but it isn't real security. Real per-person accounts need a paid Firebase tier Andrew doesn't have yet."));
+
+  const g = G();
+  if(!g.startedAt){
+    const sc = el("div","card");
+    sc.appendChild(el("div","hd","<h3>Start the game</h3>"));
+    const sb = el("div","bd");
+    sb.appendChild(el("div","tiny muted","Once the roster and today's groups look right, start the game — it generates a code for every group at once so you can hand them straight out."));
+    const startBtn = el("button","btn block","Start the game — generate all codes");
+    startBtn.style.marginTop="9px";
+    startBtn.onclick = ()=>{
+      g.groups.forEach(gr=>{ if(!gr.code) gr.code = randCode(); });
+      g.startedAt = new Date().toISOString();
+      markAdjusted(); Store.save(); render();
+    };
+    sb.appendChild(startBtn);
+    sc.appendChild(sb); m.appendChild(sc);
+  } else {
+    m.appendChild(el("div","tiny muted","<b>Started</b> "+esc(new Date(g.startedAt).toLocaleString())+" — codes below are already live. Regenerate any of them if one gets lost."));
+  }
 
   const ac = el("div","card");
   ac.appendChild(el("div","hd","<h3>Admin code</h3>"));
