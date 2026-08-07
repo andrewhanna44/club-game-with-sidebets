@@ -214,7 +214,11 @@ select.teesel{width:auto;max-width:150px;margin-top:6px;padding:5px 8px;font-siz
 }
 .betact.restore{background:var(--brand2)}
 .betrow{padding:11px 13px;background:var(--card);position:relative;touch-action:pan-y}
-.betrow.void{opacity:.45}
+.betrow.booked{background:#eaf7ee}
+.betrow.rejected{
+  background:#fbeaea;
+  text-decoration:line-through;text-decoration-color:var(--red);text-decoration-thickness:1.5px
+}
 .betrow.sliding{transition:none}
 .betrow.snap{transition:transform .18s ease}
 .betside{display:flex;align-items:center;gap:8px;padding:3px 0}
@@ -246,17 +250,23 @@ select.teesel{width:auto;max-width:150px;margin-top:6px;padding:5px 8px;font-siz
 .paybits{display:flex;flex-wrap:wrap;gap:1px 9px;margin-top:1px}
 .paypart{font-size:11px;color:var(--mute);white-space:nowrap}
 .paypart b{font-weight:700}
-.cPaid{flex:none;width:44px;text-align:center}
-.cIn{flex:none;width:42px;text-align:right;font-size:13px;color:var(--mute);font-variant-numeric:tabular-nums}
+.cPaid{flex:none;width:46px;display:flex;justify-content:center}
+.cIn{flex:none;width:44px;text-align:right;font-size:13px;font-weight:600;color:var(--mute);font-variant-numeric:tabular-nums}
 .cIn.unpaid{color:#c2cad6;text-decoration:line-through}
-.cNet{flex:none;width:64px;text-align:right;font-size:16px;font-weight:700;font-variant-numeric:tabular-nums}
-button.paidchip{
-  flex:none;width:44px;padding:4px 0;border-radius:99px;border:1px solid transparent;
-  font-size:11.5px;font-weight:700;text-align:center
+.cNet{flex:none;width:60px;text-align:right;font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
+/* An actual iOS-style slider — a plain "Yes/No" button reads as a label to
+   anyone who hasn't been told it's tappable. This can't be mistaken. */
+button.paidswitch{
+  flex:none;width:42px;height:24px;padding:2px;border-radius:99px;border:1px solid transparent;
+  background:#dfe4ee;position:relative;transition:background .15s ease
 }
-button.paidchip.yes{background:#e2f3e7;color:#12692f;border-color:#bde0c7}
-button.paidchip.no{background:#fbe9e7;color:var(--red);border-color:#f0cdc8}
-button.paidchip:disabled{opacity:1}
+button.paidswitch .knob{
+  display:block;width:18px;height:18px;border-radius:50%;background:#fff;
+  box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s ease
+}
+button.paidswitch.yes{background:#2fae5c}
+button.paidswitch.yes .knob{transform:translateX(18px)}
+button.paidswitch:disabled{opacity:.65}
 .codeeg{
   background:#12283f;color:#cfe0f2;border-radius:9px;padding:10px 11px;margin:9px 0 0;
   font:11.5px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace;overflow-x:auto;white-space:pre
@@ -1332,6 +1342,8 @@ function fullCard(m,g){
 }
 
 /* ---------------- SIDE BETS ---------------- */
+let betFilterPid = "";   // "" = everyone
+
 function viewBets(m){
   const cfg = G().betsCfg;
 
@@ -1348,14 +1360,36 @@ function viewBets(m){
   hb.appendChild(add);
   head.appendChild(hb); m.appendChild(head);
 
-  const live = Store.s.bets.filter(b=>!b.rejected);
-  const dead = Store.s.bets.filter(b=> b.rejected);
+  if(Store.s.bets.length){
+    const filterRow = el("div","card");
+    const fb = el("div","bd");
+    const fsel = el("select");
+    fsel.appendChild(el("option","","Show everyone's bets"));
+    fsel.firstChild.value = "";
+    inGame()
+      .filter(pid=> betCount(pid) > 0)
+      .sort((a,b)=> pname(a).localeCompare(pname(b)))
+      .forEach(pid=>{
+        const o = el("option","", "Just "+esc(pname(pid))+"'s bets ("+betCount(pid)+")");
+        o.value = pid; if(pid===betFilterPid) o.selected = true;
+        fsel.appendChild(o);
+      });
+    fsel.onchange = ()=>{ betFilterPid = fsel.value; render(); };
+    fb.appendChild(fsel);
+    filterRow.appendChild(fb); m.appendChild(filterRow);
+  }
+
+  const inFilter = bet => !betFilterPid || bet.a.includes(betFilterPid) || bet.b.includes(betFilterPid);
+  const live = Store.s.bets.filter(b=> !b.rejected && inFilter(b));
+  const dead = Store.s.bets.filter(b=>  b.rejected && inFilter(b));
 
   if(!Store.s.bets.length){
     m.appendChild(el("div","empty","No bets booked yet."));
+  } else if(!live.length && !dead.length){
+    m.appendChild(el("div","empty", pname(betFilterPid)+" isn't in any bets yet."));
   } else {
-    m.appendChild(betList("Booked ("+live.length+")", live));
-    if(dead.length) m.appendChild(betList("Rejected ("+dead.length+")", dead, true));
+    if(live.length) m.appendChild(betList("Booked ("+live.length+")", live));
+    if(dead.length) m.appendChild(betList("Rejected ("+dead.length+")", dead));
   }
 
   // per-player running P&L
@@ -1376,7 +1410,7 @@ function viewBets(m){
   }
 }
 
-function betList(title, list, dim){
+function betList(title, list){
   const c = el("div","card");
   c.appendChild(el("div","hd","<h3>"+title+"</h3>"));
   const bd = el("div","bd flush");
@@ -1385,7 +1419,7 @@ function betList(title, list, dim){
     const wrap = el("div","betwrap");
     const act = el("div","betact"+(bet.rejected?" restore":""), bet.rejected? "Restore<br>bet" : "Reject<br>bet");
     wrap.appendChild(act);
-    const row = el("div","betrow"+(dim?" void":""));
+    const row = el("div","betrow"+(bet.rejected?" rejected":" booked"));
     const side = (ids, score, amt, win)=>
       '<div class="betside">'+
         '<span class="who '+(win?"":"muted")+'" style="'+(win?"font-weight:650":"")+'">'+ids.map(pname).map(esc).join(" &amp; ")+'</span>'+
@@ -1617,8 +1651,14 @@ function viewStats(m){
       (bits? "<div class='paybits'>"+bits+"</div>" : "");
     row.appendChild(left);
 
-    // Buy-in: a real toggle for the admin, a read-only chip for everyone else.
-    const paidBtn = el("button","paidchip"+(r.paid?" yes":" no"), r.paid? "Yes":"No");
+    // Buy-in: a real slider for the admin, a locked one for everyone else —
+    // shaped like an iOS toggle so it doesn't need a "tap me" label to read as tappable.
+    const paidWrap = el("div","cPaid");
+    const paidBtn = el("button","paidswitch"+(r.paid?" yes":""));
+    paidBtn.appendChild(el("span","knob"));
+    paidBtn.setAttribute("role","switch");
+    paidBtn.setAttribute("aria-checked", r.paid?"true":"false");
+    paidBtn.setAttribute("aria-label", pname(r.pid)+" buy-in paid");
     if(isAdmin){
       paidBtn.onclick = ()=>{
         const e = G().entrants[r.pid]; if(!e) return;
@@ -1628,7 +1668,8 @@ function viewStats(m){
       paidBtn.disabled = true;
       paidBtn.title = "Only the admin can mark a buy-in as paid";
     }
-    row.appendChild(paidBtn);
+    paidWrap.appendChild(paidBtn);
+    row.appendChild(paidWrap);
 
     row.appendChild(el("div","cIn mono"+(r.paid?"":" unpaid"), money(r.buyIn)));
     row.appendChild(el("div","cNet mono "+(r.net>0?"pos":r.net<0?"neg":"zero"), money(r.net)));
