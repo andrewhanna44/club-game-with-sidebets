@@ -203,6 +203,10 @@ tr:last-child td{border-bottom:0}
 .sheetx:active{background:#d2d9e4}
 .sheetbody{overflow-y:auto;padding:14px 14px calc(20px + var(--pad));-webkit-overflow-scrolling:touch}
 .sheet h2{font-size:17px}
+.codeeg{
+  background:#12283f;color:#cfe0f2;border-radius:9px;padding:10px 11px;margin:9px 0 0;
+  font:11.5px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace;overflow-x:auto;white-space:pre
+}
 .sidecard{background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px 12px;margin-bottom:11px}
 .sidettl{font-size:13px;font-weight:700;color:var(--brand)}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0}
@@ -418,11 +422,11 @@ function seed(){
     admin: { code: randCode() },                          // shared — synced, gates Setup + edit-anywhere
     session: { role:null, groupId:null },                 // per-device — never synced
     deviceId: uid("d"),                                    // per-device — never synced, claims scorecards
-    meta: { scores:{}, players:{}, groups:{}, bets:{}, entrants:{}, draw:0, settings:0, admin:0 },
+    meta: { scores:{}, players:{}, groups:{}, bets:{}, courses:{}, entrants:{}, draw:0, settings:0, admin:0 },
     players, courses:[CROASDAILE],
     game: {
       id: uid("gm"), name:"Sunday Game", date:"2026-07-26", courseId:"croasdaile",
-      allowance:{ mode:"full", pct:100 },
+      allowance:{ on:false, mode:"full", pct:100 },
       team:{ balls:2, allBirdies:true },
       skins:{ basis:"gross" },
       betsCfg:{ basis:"gross", stake:5, cap:25 },
@@ -459,8 +463,10 @@ const Store = {
     if(!s.bets) s.bets = [];
     if(s.game.draw===undefined) s.game.draw = null;
     if(s.game.startedAt===undefined) s.game.startedAt = null;
-    if(!s.meta) s.meta = { scores:{}, players:{}, groups:{}, bets:{}, entrants:{}, draw:0, settings:0, admin:0 };
+    if(s.game.allowance.on===undefined) s.game.allowance.on = false;
+    if(!s.meta) s.meta = { scores:{}, players:{}, groups:{}, bets:{}, courses:{}, entrants:{}, draw:0, settings:0, admin:0 };
     if(s.meta.admin===undefined) s.meta.admin = 0;
+    if(!s.meta.courses) s.meta.courses = {};
     if(!s.admin) s.admin = { code: randCode() };
     if(!s.session) s.session = { role:null, groupId:null };
     if(!s.deviceId) s.deviceId = uid("d");
@@ -501,8 +507,11 @@ function courseHcp(pid){
   return Math.round(p.index * (slope/113) + (rating - parTot()));
 }
 
-/** Playing handicap after the game's allowance rule. null = no index on file. */
+/** Playing handicap after the game's allowance rule.
+    null = handicaps are switched off for this game, or no index on file. */
 function playingHcp(pid){
+  const a0 = G().allowance;
+  if(!a0.on) return null;              // gross game — nobody gets a stroke
   const ch = courseHcp(pid);
   if(ch==null) return null;
   const a = G().allowance;
@@ -843,10 +852,11 @@ function ledger(){
    ------------------------------------------------------------ */
 function issues(){
   const out = [];
+  if(!G().allowance.on) return out;   // gross game — a missing index isn't a problem
   const noIndex = Store.s.players.filter(p=> inGame().includes(p.id) && p.index==null);
   if(noIndex.length) out.push({
     k:"index",
-    msg:`<b>${noIndex.length} of ${inGame().length} players have no handicap index.</b> Everything is being scored gross until they're entered. Add them under Setup → Players.`
+    msg:`<b>${noIndex.length} of ${inGame().length} players have no handicap index.</b> They're being scored gross until it's entered. Add them under Setup → Players.`
   });
   const c = course();
   const badTee = c.tees.filter(t=> t.rating==null || t.slope==null);
@@ -1679,7 +1689,7 @@ function setupPlayers(m){
     b.innerHTML = "<span class='grow'><b>"+esc(p.name)+"</b>"+
       "<span class='tiny muted' style='display:block'>"+
         (p.index==null? "no index" : "Index "+p.index.toFixed(1))+
-        " · "+ (course().tees.find(t=>t.id===p.homeTee)||{name:"—"}).name +
+        " · "+ (course().tees.find(t=>t.id===defaultTeeFor(p))||{name:"—"}).name +
       "</span></span>"+
       (playing? "<span class='pill'>playing</span>":"")+
       "<span class='chev'></span>";
@@ -1705,7 +1715,7 @@ function playerSheet(p){
       '<div class="grid2">'+
         '<label class="f"><span>Handicap index</span><input type="number" id="pi" step="0.1" value="'+(d.index==null?"":d.index)+'" placeholder="e.g. 8.4"></label>'+
         '<label class="f"><span>Tees</span><select id="pt">'+
-          course().tees.map(t=>'<option value="'+t.id+'"'+(t.id===d.homeTee?" selected":"")+'>'+esc(t.name)+'</option>').join("")+
+          course().tees.map(t=>'<option value="'+t.id+'"'+(t.id===defaultTeeFor(d)?" selected":"")+'>'+esc(t.name)+'</option>').join("")+
         '</select></label>'+
       '</div>'+
       '<div class="grid2">'+
@@ -1919,7 +1929,7 @@ function setupField(m){
     course().tees.forEach(t=>{
       const o = el("option","",esc(t.name)); o.value=t.id;
       if(on && G().entrants[p.id].teeId===t.id) o.selected=true;
-      else if(!on && p.homeTee===t.id) o.selected=true;
+      else if(!on && defaultTeeFor(p)===t.id) o.selected=true;
       sel.appendChild(o);
     });
     sel.disabled = !on;
@@ -1932,7 +1942,7 @@ function setupField(m){
         if(g){ g.pids = g.pids.filter(x=>x!==p.id); markAdjusted(); }
         delete G().entrants[p.id];
       } else {
-        G().entrants[p.id] = { teeId: p.homeTee };
+        G().entrants[p.id] = { teeId: defaultTeeFor(p) };
         if(!Store.s.scores[p.id]) Store.s.scores[p.id] = new Array(H).fill(null);
       }
       Store.save(); render();
@@ -2178,58 +2188,302 @@ function setupDraw(m){
   }
 }
 
+function blankCourse(name){
+  const si = Array.from({length:18},(_,i)=>i+1);
+  return {
+    id: uid("c"), name: name||"New course", loc:"",
+    par: new Array(18).fill(4),
+    siSets: { menA: si.slice(), menB: si.slice(), ladies: si.slice() },
+    tees: [ { id:uid("t"), name:"Blue", si:"menA", rating:null, slope:null, ratingW:null, slopeW:null, total:null, yards:null } ]
+  };
+}
+
+/* Accepts a pasted block or a CSV file. Row label in the first cell, so the
+   order doesn't matter and extra rows are ignored:
+     Name,Pinehurst No. 2
+     Par,4,3,5,...              (18 numbers)
+     Hcp,17,11,5,...            (18 numbers — the men's stroke index)
+     HcpB,... / HcpW,...        (optional extra sets)
+     Tee,Blue,72.1,138          (name, rating, slope [, 18 yardages])
+   A leading "Hole,1,2,3..." row is ignored, so a straight scorecard paste works. */
+function parseCourseCSV(text){
+  const out = { name:null, loc:null, par:null, menA:null, menB:null, ladies:null, tees:[], problems:[] };
+  const lines = String(text||"").split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  const nums = cells => cells.map(v=> v===""? null : parseFloat(String(v).replace(/[^0-9.\-]/g,"")))
+                             .filter(v=> v!=null && !isNaN(v));
+  lines.forEach(line=>{
+    const cells = splitCSVLine(line);
+    const tag = (cells[0]||"").toLowerCase().replace(/[^a-z]/g,"");
+    const rest = cells.slice(1);
+    if(tag==="name" || tag==="course") out.name = rest[0] || null;
+    else if(tag==="location" || tag==="loc" || tag==="city") out.loc = rest[0] || null;
+    else if(tag==="hole" || tag==="holes") { /* header row — ignore */ }
+    else if(tag==="par"){ const v = nums(rest); if(v.length>=18) out.par = v.slice(0,18); else out.problems.push("Par row had "+v.length+" numbers, needs 18"); }
+    else if(tag==="hcp" || tag==="hcpa" || tag==="handicap" || tag==="mens" || tag==="menshcp"){
+      const v = nums(rest); if(v.length>=18) out.menA = v.slice(0,18); else out.problems.push("Hcp row had "+v.length+" numbers, needs 18");
+    }
+    else if(tag==="hcpb" || tag==="mensb"){ const v=nums(rest); if(v.length>=18) out.menB = v.slice(0,18); }
+    else if(tag==="hcpw" || tag==="ladies" || tag==="ladieshcp" || tag==="womens"){ const v=nums(rest); if(v.length>=18) out.ladies = v.slice(0,18); }
+    else if(tag==="tee" || tag==="tees"){
+      const nm = rest[0];
+      if(!nm) return;
+      const v = nums(rest.slice(1));
+      const yards = v.length >= 20 ? v.slice(2,20) : null;
+      out.tees.push({
+        id: uid("t"), name: nm, si:"menA",
+        rating: v[0]!=null? v[0] : null,
+        slope:  v[1]!=null? v[1] : null,
+        ratingW:null, slopeW:null,
+        total: yards? sum(yards) : null,
+        yards
+      });
+    }
+  });
+  return out;
+}
+
+function courseImportSheet(){
+  sheet("Add a course from a spreadsheet", body=>{
+    body.appendChild(el("div","tiny muted",
+      "Paste from Excel or pick a CSV. Label each row in the first column — order doesn't matter, and anything unrecognised is skipped. "+
+      "Only <b>Par</b> and <b>Hcp</b> are required; add a <b>Tee</b> line per set of tees with its rating and slope."));
+    const eg = el("pre","codeeg",
+      "Name,Pinehurst No. 2\nPar,4,3,5,4,3,5,4,4,4,5,3,4,5,3,4,4,4,4\nHcp,17,11,5,9,15,3,1,13,7,18,8,6,10,4,16,2,12,14\nTee,Blue,72.1,138\nTee,White,69.7,129");
+    body.appendChild(eg);
+
+    const file = el("input"); file.type="file"; file.accept=".csv,text/csv"; file.style.marginTop="9px";
+    body.appendChild(file);
+    const ta = el("textarea");
+    ta.style.cssText="width:100%;min-height:130px;margin-top:9px;border:1px solid var(--line);border-radius:9px;padding:9px;background:#fff;font:12px/1.4 ui-monospace,SFMono-Regular,Consolas,monospace";
+    ta.placeholder="…or paste the rows here";
+    body.appendChild(ta);
+    file.onchange = ()=>{
+      const f = file.files[0]; if(!f) return;
+      const rd = new FileReader();
+      rd.onload = ()=>{ ta.value = String(rd.result); };
+      rd.readAsText(f);
+    };
+
+    const msg = el("div","tiny"); msg.style.marginTop="8px";
+    body.appendChild(msg);
+
+    const go = el("button","btn block","Add this course"); go.style.marginTop="9px";
+    go.onclick = ()=>{
+      const p = parseCourseCSV(ta.value);
+      if(!p.par || !p.menA){
+        msg.style.color="var(--red)";
+        msg.innerHTML = "<b>Need both a Par row and a Hcp row of 18 numbers.</b>"+
+          (p.problems.length? "<br>"+p.problems.map(esc).join("<br>") : "");
+        return;
+      }
+      const c = blankCourse(p.name || "Imported course");
+      c.loc = p.loc || "";
+      c.par = p.par;
+      c.siSets.menA = p.menA;
+      c.siSets.menB = p.menB || p.menA.slice();
+      c.siSets.ladies = p.ladies || p.menA.slice();
+      if(p.tees.length) c.tees = p.tees;
+      Store.s.courses.push(c);
+      switchCourse(c.id);
+      closeSheet(); render();
+    };
+    body.appendChild(go);
+  });
+}
+
+/** Tee this player should default to on the current course. Never rewrites
+    the stored homeTee — a tee that doesn't exist here may still be right
+    back on their home course. */
+function defaultTeeFor(p){
+  const c = course();
+  if(p && c.tees.some(t=>t.id===p.homeTee)) return p.homeTee;
+  return c.tees[0] ? c.tees[0].id : null;
+}
+
+/** Point the game at another course.
+    Each entrant remembers the tee they last played on each course, so
+    switching away and back restores their real tees instead of dumping
+    everyone on the first one. Falls back to matching by tee NAME (a "Blue"
+    is a "Blue" at most clubs) before giving up and using the first tee. */
+function switchCourse(cid){
+  const c = Store.s.courses.find(x=>x.id===cid); if(!c) return;
+  const prevId = G().courseId;
+  const prev = Store.s.courses.find(x=>x.id===prevId);
+
+  Object.keys(G().entrants).forEach(pid=>{
+    const e = G().entrants[pid];
+    if(prev && e.teeId){
+      e.teeByCourse = e.teeByCourse || {};
+      e.teeByCourse[prevId] = e.teeId;      // remember where they were
+    }
+  });
+
+  G().courseId = cid;
+  const valid = new Set(c.tees.map(t=>t.id));
+  const fallback = c.tees[0] ? c.tees[0].id : null;
+
+  Object.keys(G().entrants).forEach(pid=>{
+    const e = G().entrants[pid];
+    if(valid.has(e.teeId)) return;
+    const remembered = e.teeByCourse && e.teeByCourse[cid];
+    if(remembered && valid.has(remembered)){ e.teeId = remembered; return; }
+    const oldName = prev && prev.tees.find(t=>t.id===e.teeId)?.name;
+    const byName = oldName && c.tees.find(t=> t.name.toLowerCase() === oldName.toLowerCase());
+    e.teeId = byName ? byName.id : fallback;
+  });
+  Store.save();
+}
+
 function setupCourse(m){
   backBtn(m);
   const c = course();
-  const head = el("div","card");
-  head.appendChild(el("div","hd","<h3>"+esc(c.name)+"</h3><span class='right pill'>Par "+parTot()+"</span>"));
-  head.appendChild(el("div","bd","<div class='tiny muted'>"+esc(c.loc)+
-    " · hole handicaps and ratings as re-issued by the club, effective 1 Apr 2026. "+
-    "Men playing Gold through White/Green use one stroke-index set; Green through Red use another.</div>"));
-  m.appendChild(head);
 
+  // ---- which course ----
+  const pick = el("div","card");
+  pick.appendChild(el("div","hd","<h3>Course for this game</h3><span class='right pill'>Par "+parTot()+"</span>"));
+  const pb = el("div","bd");
+  const sel = el("select");
+  Store.s.courses.forEach(cc=>{
+    const o = el("option","",esc(cc.name)); o.value = cc.id;
+    if(cc.id===c.id) o.selected = true;
+    sel.appendChild(o);
+  });
+  sel.onchange = ()=>{ switchCourse(sel.value); render(); };
+  pb.appendChild(sel);
+  const row = el("div","row"); row.style.marginTop="9px";
+  const imp = el("button","btn ghost grow","Import from a spreadsheet");
+  imp.onclick = courseImportSheet;
+  const add = el("button","btn ghost grow","Start a blank course");
+  add.onclick = ()=>{
+    const name = prompt("Name of the course?");
+    if(!name) return;
+    const nc = blankCourse(name.trim());
+    Store.s.courses.push(nc);
+    switchCourse(nc.id);
+    render();
+  };
+  row.append(imp, add);
+  pb.appendChild(row);
+  pick.appendChild(pb);
+  m.appendChild(pick);
+
+  // ---- name / location ----
+  const meta = el("div","card"); const mb = el("div","bd");
+  mb.innerHTML =
+    '<div class="grid2">'+
+      '<label class="f"><span>Course name</span><input type="text" id="cn" value="'+esc(c.name)+'"></label>'+
+      '<label class="f"><span>Location</span><input type="text" id="cl" value="'+esc(c.loc||"")+'"></label>'+
+    '</div>';
+  meta.appendChild(mb); m.appendChild(meta);
+  $("#cn",mb).onchange = e=>{ c.name = e.target.value.trim() || c.name; Store.save(); render(); };
+  $("#cl",mb).onchange = e=>{ c.loc = e.target.value.trim(); Store.save(); };
+
+  // ---- tees ----
   const t = el("div","card");
-  t.appendChild(el("div","hd","<h3>Tees</h3>"));
+  t.appendChild(el("div","hd","<h3>Tees</h3><span class='right pill'>"+c.tees.length+"</span>"));
   const bd = el("div","bd flush tw");
   const tb = el("table");
-  tb.innerHTML = "<thead><tr><th>Tee</th><th class='n'>Yds</th><th class='n'>Rating</th><th class='n'>Slope</th><th class='n'>Scr</th></tr></thead>";
+  tb.innerHTML = "<thead><tr><th>Tee</th><th class='n'>Rating</th><th class='n'>Slope</th><th class='n'>Set</th><th></th></tr></thead>";
   const body = el("tbody");
   c.tees.forEach(te=>{
     const tr = el("tr");
-    tr.innerHTML = "<td>"+esc(te.name)+"</td><td class='n mono muted'>"+(te.total||"—")+"</td>";
+    const nameTd = el("td");
+    const ni = el("input"); ni.type="text"; ni.value = te.name; ni.style.cssText="min-width:96px;padding:5px 6px";
+    ni.onchange = ()=>{ te.name = ni.value.trim() || te.name; Store.save(); render(); };
+    nameTd.appendChild(ni); tr.appendChild(nameTd);
+
     ["rating","slope"].forEach(k=>{
       const td = el("td","n");
       const i = el("input"); i.type="number"; i.step = k==="rating"?"0.1":"1";
-      i.value = te[k]==null?"":te[k]; i.style.width="62px"; i.style.textAlign="right"; i.style.padding="5px 6px";
+      i.value = te[k]==null?"":te[k]; i.style.cssText="width:66px;text-align:right;padding:5px 6px";
       i.onchange = ()=>{ te[k] = i.value===""?null:parseFloat(i.value); Store.save(); render(); };
       td.appendChild(i); tr.appendChild(td);
     });
-    tr.appendChild(el("td","n tiny muted", te.si==="menA"?"A":"B"));
+
+    const setTd = el("td","n");
+    const ss = el("select"); ss.style.cssText="width:64px;padding:4px";
+    [["menA","A"],["menB","B"]].forEach(([v,l])=>{
+      const o = el("option","",l); o.value=v; if(te.si===v) o.selected=true; ss.appendChild(o);
+    });
+    ss.onchange = ()=>{ te.si = ss.value; Store.save(); render(); };
+    setTd.appendChild(ss); tr.appendChild(setTd);
+
+    const delTd = el("td","n");
+    const db2 = el("button","btn ghost sm","×");
+    db2.style.cssText="color:var(--red);padding:4px 9px";
+    db2.onclick = ()=>{
+      if(c.tees.length<2) return alert("A course needs at least one tee.");
+      if(!confirm("Remove the "+te.name+" tee?")) return;
+      c.tees = c.tees.filter(x=>x.id!==te.id);
+      switchCourse(c.id); render();
+    };
+    delTd.appendChild(db2); tr.appendChild(delTd);
     body.appendChild(tr);
   });
   tb.appendChild(body); bd.appendChild(tb); t.appendChild(bd);
-  t.appendChild(el("div","bd","<div class='tiny muted'>Women's ratings are stored separately and used automatically for anyone set to the women's rating set.</div>"));
+  const addTee = el("div","bd");
+  const at = el("button","btn ghost block","+ Add a tee");
+  at.onclick = ()=>{
+    c.tees.push({ id:uid("t"), name:"New tee", si:"menA", rating:null, slope:null, ratingW:null, slopeW:null, total:null, yards:null });
+    Store.save(); render();
+  };
+  addTee.appendChild(at);
+  addTee.appendChild(el("div","tiny muted",
+    "<b>Set</b> is which stroke-index row that tee plays off. Most courses only need A. "+
+    "Croasdaile prints two men's sets — Gold through White/Green use A, Green through Red use B — which is why it's here."));
+  t.appendChild(addTee);
   m.appendChild(t);
 
+  // ---- holes ----
   const h = el("div","card");
-  h.appendChild(el("div","hd","<h3>Holes</h3>"));
+  h.appendChild(el("div","hd","<h3>Holes</h3><span class='right pill grey'>tap to edit</span>"));
   const hb = el("div","bd flush tw");
   const ht = el("table","cardtbl");
   let head2 = "<thead><tr><th>Hole</th>"; for(let i=0;i<18;i++) head2+="<th>"+(i+1)+"</th>"; head2+="</tr></thead>";
   ht.innerHTML = head2;
   const hbody = el("tbody");
-  const mkrow = (label, arr)=>{
-    let r = "<tr><td>"+label+"</td>";
-    arr.forEach(v=> r += "<td>"+v+"</td>");
-    r += "</tr>";
-    hbody.insertAdjacentHTML("beforeend", r);
+  const mkrow = (label, arr, onset)=>{
+    const tr = el("tr");
+    tr.appendChild(el("td","",label));
+    arr.forEach((v,i)=>{
+      const td = el("td");
+      const inp = el("input"); inp.type="number"; inp.value = v;
+      inp.style.cssText="width:34px;text-align:center;padding:3px 1px;font-size:12px;border-radius:6px";
+      inp.onchange = ()=>{
+        const n = parseInt(inp.value,10);
+        if(isNaN(n)) { inp.value = arr[i]; return; }
+        onset(i, n); Store.save(); render();
+      };
+      td.appendChild(inp); tr.appendChild(td);
+    });
+    hbody.appendChild(tr);
   };
-  mkrow("Par", c.par);
-  mkrow("Hcp A", c.siSets.menA);
-  mkrow("Hcp B", c.siSets.menB);
-  mkrow("Hcp W", c.siSets.ladies);
+  mkrow("Par",   c.par,            (i,n)=> c.par[i] = clamp(n,3,6));
+  mkrow("Hcp A", c.siSets.menA,    (i,n)=> c.siSets.menA[i] = clamp(n,1,18));
+  mkrow("Hcp B", c.siSets.menB,    (i,n)=> c.siSets.menB[i] = clamp(n,1,18));
+  mkrow("Hcp W", c.siSets.ladies,  (i,n)=> c.siSets.ladies[i] = clamp(n,1,18));
   ht.appendChild(hbody); hb.appendChild(ht); h.appendChild(hb);
+
+  // a duplicated or missing stroke index silently breaks every net score
+  const warn = [];
+  [["Hcp A",c.siSets.menA],["Hcp B",c.siSets.menB],["Hcp W",c.siSets.ladies]].forEach(([lbl,arr])=>{
+    const seen = new Set(arr);
+    if(seen.size !== 18) warn.push(lbl+" repeats or skips a number — it should use each of 1–18 exactly once.");
+  });
+  if(warn.length) h.appendChild(el("div","bd","<div class='banner' style='margin:0'>"+warn.map(esc).join("<br>")+"</div>"));
   m.appendChild(h);
+
+  if(Store.s.courses.length > 1){
+    const del = el("button","btn ghost block","Delete this course");
+    del.style.color="var(--red)";
+    del.onclick = ()=>{
+      if(!confirm("Delete "+c.name+"? Any game still pointing at it will fall back to another course.")) return;
+      Store.s.courses = Store.s.courses.filter(x=>x.id!==c.id);
+      switchCourse(Store.s.courses[0].id);
+      render();
+    };
+    m.appendChild(del);
+  }
 }
 
 function setupRules(m){
@@ -2255,8 +2509,26 @@ function setupRules(m){
   $("#gb",b1).onchange = e=>{ g.team.balls=clamp(parseInt(e.target.value,10)||2,1,4); Store.save(); render(); };
 
   const c2 = el("div","card");
-  c2.appendChild(el("div","hd","<h3>Handicaps</h3>"));
+  c2.appendChild(el("div","hd","<h3>Handicaps</h3><span class='right pill"+(g.allowance.on?"":" grey")+"'>"+
+    (g.allowance.on?"on":"off — gross")+"</span>"));
   const b2 = el("div","bd");
+
+  const onOff = el("div","seg"); onOff.style.marginBottom="11px";
+  [[false,"Off · play it gross"],[true,"On · use handicaps"]].forEach(([v,l])=>{
+    const b = el("button", g.allowance.on===v?"on":"", l);
+    b.onclick = ()=>{ g.allowance.on=v; Store.save(); render(); };
+    onOff.appendChild(b);
+  });
+  b2.appendChild(onOff);
+
+  if(!g.allowance.on){
+    b2.appendChild(el("div","tiny muted",
+      "Every score counts as played — no strokes given, net equals gross. Team scores, skins and side bets all run off raw scores. "+
+      "Handicap indexes stay on file, and team building still balances by them, so switching this on later needs no re-entry."));
+    c2.appendChild(b2); m.appendChild(c2);
+    return setupRulesRest(m, g);
+  }
+
   const seg = el("div","seg"); seg.style.marginBottom="11px";
   [["full","Full"],["low","Off low man"],["pct","Percentage"]].forEach(([k,l])=>{
     const b = el("button", g.allowance.mode===k?"on":"", l);
@@ -2275,7 +2547,11 @@ function setupRules(m){
      : g.allowance.mode==="pct" ? "Then scaled to "+g.allowance.pct+"%."
      : "Used in full.")));
   c2.appendChild(b2); m.appendChild(c2);
+  return setupRulesRest(m, g);
+}
 
+/* Everything below the handicap block — shown whether handicaps are on or off. */
+function setupRulesRest(m, g){
   const c3 = el("div","card");
   c3.appendChild(el("div","hd","<h3>Skins &amp; side bets</h3>"));
   const b3 = el("div","bd");
@@ -2291,6 +2567,8 @@ function setupRules(m){
   };
   mkSeg("Skins scored", g.skins, "basis");
   mkSeg("Side bets scored", g.betsCfg, "basis");
+  if(!g.allowance.on)
+    b3.appendChild(el("div","tiny muted","Handicaps are off, so net and gross are the same number right now — this setting only starts to matter once you switch them on."));
   const g2 = el("div","grid2");
   g2.innerHTML =
     '<label class="f"><span>Default $/stroke</span><input type="number" id="ds" value="'+g.betsCfg.stake+'"></label>'+
@@ -2387,6 +2665,12 @@ const FIREBASE_CONFIG = {
   appId: "1:99531798281:web:db211c0f9472a0c9d385d8"
 };
 
+const collList = coll =>
+  coll==="players" ? Store.s.players :
+  coll==="groups"  ? G().groups :
+  coll==="bets"    ? Store.s.bets :
+  coll==="courses" ? Store.s.courses : [];
+
 function mergeRemoteRecord(coll, id, clean){
   if(coll==="players"){
     let p = Store.s.players.find(x=>x.id===id);
@@ -2406,12 +2690,22 @@ function mergeRemoteRecord(coll, id, clean){
     Object.assign(b, clean, {id});
     return true;
   }
+  if(coll==="courses"){
+    let c = Store.s.courses.find(x=>x.id===id);
+    if(!c){ c = {id}; Store.s.courses.push(c); }
+    Object.assign(c, clean, {id});
+    return true;
+  }
   return false;
 }
 function removeRemoteRecord(coll, id){
   if(coll==="players"){ Store.s.players = Store.s.players.filter(x=>x.id!==id); delete Store.s.scores[id]; return true; }
   if(coll==="groups"){ G().groups = G().groups.filter(x=>x.id!==id); return true; }
   if(coll==="bets"){ Store.s.bets = Store.s.bets.filter(x=>x.id!==id); return true; }
+  if(coll==="courses"){
+    if(Store.s.courses.length<2) return false;   // never leave the app with no course
+    Store.s.courses = Store.s.courses.filter(x=>x.id!==id); return true;
+  }
   return false;
 }
 
@@ -2490,6 +2784,7 @@ const Sync = {
     syncColl("players", s.players);
     syncColl("groups", s.game.groups);
     syncColl("bets", s.bets);
+    syncColl("courses", s.courses);
 
     {
       const prevMap = prev.entrants || (prev.entrants = {});
@@ -2567,7 +2862,7 @@ const Sync = {
       if(remoteAlreadyExists && Store.freshlySeeded){
         Store.s.players = []; Store.s.scores = {}; Store.s.bets = [];
         Store.s.game.groups = []; Store.s.game.entrants = {};
-        Store.s.meta = { scores:{}, players:{}, groups:{}, bets:{}, entrants:{}, draw:0, settings:0, admin:Store.s.meta.admin||0 };
+        Store.s.meta = { scores:{}, players:{}, groups:{}, bets:{}, courses:{}, entrants:{}, draw:0, settings:0, admin:Store.s.meta.admin||0 };
       }
 
       onValue(ref(this.db, ".info/connected"), snap=>{ this.online = !!snap.val(); render(); });
@@ -2592,7 +2887,7 @@ const Sync = {
         if(changed){ localStorage.setItem(KEY, JSON.stringify(Store.s)); render(); }
       });
 
-      ["players","groups","bets"].forEach(coll=>{
+      ["players","groups","bets","courses"].forEach(coll=>{
         onValue(ref(this.db, coll), snap=>{
           const all = snap.val()||{}; let changed=false;
           Object.keys(all).forEach(id=>{
@@ -2602,11 +2897,11 @@ const Sync = {
               const clean = Object.assign({}, rec); delete clean.t;
               if(mergeRemoteRecord(coll, id, clean)) changed = true;
               Store.s.meta[coll][id] = rec.t;
-              const listNow = coll==="players" ? Store.s.players : coll==="groups" ? G().groups : Store.s.bets;
+              const listNow = collList(coll);
               this.notePrevRecord(coll, id, listNow.find(x=>x.id===id) || null);
             }
           });
-          const list = coll==="players" ? Store.s.players : coll==="groups" ? G().groups : Store.s.bets;
+          const list = collList(coll);
           list.slice().forEach(item=>{
             if(!(item.id in all) && Store.s.meta[coll][item.id]){
               removeRemoteRecord(coll, item.id);

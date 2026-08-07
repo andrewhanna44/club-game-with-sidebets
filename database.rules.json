@@ -33,6 +33,13 @@
       }
     },
 
+    "courses": {
+      ".read": "auth != null",
+      "$cid": {
+        ".write": "auth != null"
+      }
+    },
+
     "entrants": {
       ".read": "auth != null",
       "$pid": {
